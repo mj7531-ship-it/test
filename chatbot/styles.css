@@ -300,6 +300,61 @@ body {
   transform: none;
 }
 
+/* download card (봇 답변 속 파일 링크) */
+.dl-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.dl-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -12px rgba(79, 70, 229, 0.6);
+}
+.dl-card__icon {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+}
+.dl-card__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+.dl-card__name {
+  font-weight: 600;
+  font-size: 13.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dl-card__hint {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.dl-card__arrow {
+  margin-left: auto;
+  flex: none;
+  color: var(--text-muted);
+}
+.dl-card:hover .dl-card__arrow {
+  color: var(--accent);
+}
+
 @keyframes pop {
   from {
     opacity: 0;

@@ -88,6 +88,57 @@ function renderMarkdown(text) {
   return div.innerHTML.replace(/\n/g, "<br>");
 }
 
+/* ---------- download buttons ---------- */
+const FILE_RE = /\.(pdf|docx?|xlsx?|pptx?|hwpx?|zip|csv|txt|rtf|jpe?g|png)(\?|#|$)/i;
+const GD_VIEW_RE = /drive\.google\.com\/file\/d\/([^/?#]+)/i;
+const FILE_ICON =
+  '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+const DL_ICON =
+  '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>';
+
+function looksDownloadable(href) {
+  return (
+    FILE_RE.test(href) ||
+    /[?&]export=download/i.test(href) ||
+    /[?&]download(=|&|$)/i.test(href) ||
+    /#download$/i.test(href)
+  );
+}
+
+// 봇 답변 속 파일/구글드라이브 링크를 다운로드 버튼 카드로 변환
+function decorateDownloads(container) {
+  container.querySelectorAll("a").forEach((a) => {
+    let href = a.getAttribute("href") || "";
+    const text = (a.textContent || "").trim();
+    const gd = href.match(GD_VIEW_RE);
+    if (gd) href = "https://drive.google.com/uc?export=download&id=" + gd[1];
+    if (!gd && !looksDownloadable(href)) return;
+
+    let name = text;
+    if (!name || /^https?:/i.test(name)) {
+      try {
+        name = decodeURIComponent(href.split(/[?#]/)[0].split("/").pop()) || "첨부 파일";
+      } catch {
+        name = "첨부 파일";
+      }
+    }
+
+    const card = document.createElement("a");
+    card.className = "dl-card";
+    card.href = href;
+    card.target = "_blank";
+    card.rel = "noopener noreferrer";
+    card.setAttribute("download", "");
+    card.innerHTML =
+      '<span class="dl-card__icon">' + FILE_ICON + "</span>" +
+      '<span class="dl-card__body"><span class="dl-card__name"></span>' +
+      '<span class="dl-card__hint">클릭하면 다운로드</span></span>' +
+      '<span class="dl-card__arrow">' + DL_ICON + "</span>";
+    card.querySelector(".dl-card__name").textContent = name;
+    a.replaceWith(card);
+  });
+}
+
 function addMessage(text, who) {
   const row = document.createElement("div");
   row.className = `msg msg--${who}`;
@@ -95,6 +146,7 @@ function addMessage(text, who) {
   bubble.className = "msg__bubble";
   if (who === "bot") {
     bubble.innerHTML = renderMarkdown(text);
+    decorateDownloads(bubble);
   } else {
     bubble.textContent = text;
   }

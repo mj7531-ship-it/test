@@ -54,3 +54,13 @@ CORS 를 안 열면 브라우저 콘솔에 CORS 에러가 뜨고 메시지가 �
 - 응답에서 `output` / `text` / `response` 등 다양한 키를 자동으로 찾아 표시
 - `sessionId` 는 브라우저에 저장되어 대화 맥락(메모리)이 유지됩니다
 - 봇 답변은 마크다운으로 렌더링되며 DOMPurify 로 XSS 방지 처리됩니다
+- 봇 답변 속 **파일 링크(.pdf 등)나 Google Drive 링크는 자동으로 "다운로드 버튼"** 으로 표시됩니다
+
+## 파일(양식) 다운로드
+
+n8n 워크플로우가 답변 텍스트에 다운로드 링크를 마크다운으로 넣어주면, 화면에서
+자동으로 다운로드 버튼 카드로 바뀝니다. n8n 쪽은 "링크만" 주면 됩니다.
+
+- 일반 파일 링크: `[신청서 양식](https://.../form.pdf)`
+- Google Drive: `https://drive.google.com/file/d/<ID>/view` 링크도 자동으로 다운로드용으로 변환
+- n8n 직접 서빙: `Webhook → Respond to Webhook (Binary, Content-Disposition: attachment)` 워크플로우 URL 도 인식 (`?download` 또는 파일 확장자 포함 시)
