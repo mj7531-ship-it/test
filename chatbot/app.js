@@ -16,6 +16,32 @@ const CONFIG = {
 const _params = new URLSearchParams(location.search);
 if (_params.get("webhook")) CONFIG.webhookUrl = _params.get("webhook");
 
+// localStorage 가 막힌 환경(file:// 로 직접 열기 등)에서도 동작하도록 안전 래퍼
+const _mem = {};
+const store = {
+  get(k) {
+    try {
+      return localStorage.getItem(k);
+    } catch {
+      return k in _mem ? _mem[k] : null;
+    }
+  },
+  set(k, v) {
+    try {
+      localStorage.setItem(k, v);
+    } catch {
+      _mem[k] = v;
+    }
+  },
+  remove(k) {
+    try {
+      localStorage.removeItem(k);
+    } catch {
+      delete _mem[k];
+    }
+  },
+};
+
 const state = {
   sessionId: getOrCreateSessionId(),
   sending: false,
@@ -33,12 +59,12 @@ const els = {
 
 /* ---------- session ---------- */
 function getOrCreateSessionId() {
-  let id = localStorage.getItem("n8n-chat-session");
+  let id = store.get("n8n-chat-session");
   if (!id) {
     id =
       (crypto.randomUUID && crypto.randomUUID()) ||
       "sess-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    localStorage.setItem("n8n-chat-session", id);
+    store.set("n8n-chat-session", id);
   }
   return id;
 }
@@ -48,7 +74,7 @@ function toggleTheme() {
   const cur = document.documentElement.getAttribute("data-theme");
   const next = cur === "dark" ? "light" : "dark";
   document.documentElement.setAttribute("data-theme", next);
-  localStorage.setItem("n8n-chat-theme", next);
+  store.set("n8n-chat-theme", next);
 }
 
 /* ---------- rendering ---------- */
@@ -184,7 +210,7 @@ function autoResize() {
 
 function resetConversation() {
   els.messages.innerHTML = "";
-  localStorage.removeItem("n8n-chat-session");
+  store.remove("n8n-chat-session");
   state.sessionId = getOrCreateSessionId();
   if (CONFIG.welcomeMessage) addMessage(CONFIG.welcomeMessage, "bot");
 }

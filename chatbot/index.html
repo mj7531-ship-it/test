@@ -8,9 +8,12 @@
     <script>
       // 페인트 전에 테마 적용 (깜빡임 방지)
       (function () {
-        var t =
-          localStorage.getItem("n8n-chat-theme") ||
-          (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        var t;
+        try {
+          t = localStorage.getItem("n8n-chat-theme");
+        } catch (e) {}
+        if (!t)
+          t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         document.documentElement.setAttribute("data-theme", t);
       })();
     </script>

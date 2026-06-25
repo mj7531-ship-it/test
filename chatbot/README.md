@@ -3,24 +3,36 @@
 n8n **Chat Trigger** webhook 에 연결되는 커스텀 챗봇 화면입니다.
 빌드/의존성 없이 정적 파일(HTML/CSS/JS)로만 동작합니다.
 
-## 로컬 실행
+## 로컬에서 보기
 
-> `file://` 로 직접 열면 브라우저 CORS 정책에 막히므로, **꼭 정적 서버로** 띄우세요.
+### 방법 A — 더블클릭 (설치 없이 가장 쉬움)
 
-```bash
-cd chatbot
-python3 -m http.server 8000
-# 또는: npx serve .
+`index.html` 을 더블클릭해서 브라우저로 엽니다. 이때 페이지 주소가 `file://`
+(origin = `null`) 이므로, 아래 n8n 설정에서 **Allowed Origins (CORS) 를 반드시 `*`**
+로 둬야 합니다.
+
+### 방법 B — 로컬 서버로 띄우기
+
+Node 가 있으면:
+
+```
+npx serve chatbot
 ```
 
-브라우저에서 <http://localhost:8000> 접속.
+Python 이 있으면 (Windows 는 `py`, macOS/Linux 는 `python3`):
+
+```
+py -m http.server 8000
+```
+
+그 뒤 브라우저에서 <http://localhost:8000> 접속.
 
 ## n8n 쪽 설정 (중요)
 
 1. 워크플로우의 **Chat Trigger** 노드를 엽니다.
-2. **Options → Allowed Origins (CORS)** 에 로컬 주소를 추가합니다.
-   - 빠른 테스트: `*`
-   - 권장: `http://localhost:8000`
+2. **Options → Allowed Origins (CORS)** 설정:
+   - 더블클릭(방법 A)으로 열면 → 반드시 `*`
+   - 로컬 서버(방법 B)면 → `*` 또는 `http://localhost:8000`
 3. 워크플로우를 **Active** 로 켭니다. (production `/webhook/...` URL 사용)
 
 CORS 를 안 열면 브라우저 콘솔에 CORS 에러가 뜨고 메시지가 전송되지 않습니다.
