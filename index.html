@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<script>try{var t=localStorage.getItem('nakseo.theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-pick',t);}catch(e){}</script>
 <style>
 :root {
   --paper: #F5F8FB;
@@ -37,7 +38,7 @@
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme="light"]):not([data-pick="light"]) {
     --paper: #111821; --panel: #111821F0; --grid: #19232F; --grid-major: #263345;
     --ink: #E6EDF6; --ink-soft: #A1B1C6; --ink-faint: #6E8097; --line: #243142;
     --ground: #0C1118; --btn: #18212D; --btn-line: #33445A;
@@ -46,7 +47,7 @@
     color-scheme: dark;
   }
 }
-:root[data-theme="dark"] {
+:root[data-theme="dark"]:not([data-pick="light"]), :root[data-pick="dark"] {
   --paper: #111821; --panel: #111821F0; --grid: #19232F; --grid-major: #263345;
   --ink: #E6EDF6; --ink-soft: #A1B1C6; --ink-faint: #6E8097; --line: #243142;
   --ground: #0C1118; --btn: #18212D; --btn-line: #33445A;
@@ -175,7 +176,10 @@ button { font: inherit; color: inherit; }
   opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s;
 }
 .bubble.show { opacity: 1; transform: translate(-50%, 0); }
-.float-info { position: absolute; right: 16px; z-index: 2; }
+.float-tools { position: absolute; right: 16px; z-index: 2; display: flex; gap: 8px; }
+.icon-btn { width: 40px; padding: 0; display: grid; place-items: center; }
+.icon-btn svg { width: 20px; height: 20px; }
+.icon-btn[data-to="light"] .i-moon, .icon-btn[data-to="dark"] .i-sun { display: none; }
 .lane-label {
   position: absolute; left: 16px; z-index: 2; display: flex; align-items: baseline; gap: 8px;
   padding: 2px 10px 3px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line);
@@ -259,7 +263,13 @@ summary { cursor: pointer; font-weight: 600; }
   </header>
 
   <div id="bubble" class="bubble" role="status" aria-live="polite"></div>
-  <button id="infoBtn" class="tool float-info evo-only" type="button">어떻게 배워?</button>
+  <div id="floatTools" class="float-tools">
+    <button id="themeBtn" class="tool icon-btn" type="button" data-to="dark" aria-label="다크 모드로 바꾸기" title="다크 모드로 바꾸기">
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.6A8.2 8.2 0 1 1 9.4 4a6.6 6.6 0 0 0 10.6 10.6z"/></svg>
+    </button>
+    <button id="infoBtn" class="tool evo-only" type="button">어떻게 배워?</button>
+  </div>
   <div id="laneA" class="lane-label cmp-only"><span>1세대 챔피언</span><span class="num" id="laneAd">0.00m</span></div>
   <div id="laneB" class="lane-label cmp-only"><span id="laneBn">지금 챔피언</span><span class="num" id="laneBd">0.00m</span></div>
 
@@ -962,6 +972,13 @@ const Samples = (() => {
   };
   const EX_COLOR = { potato: 0, dino: 3, star: 1, octopus: 4 };
 
+  // ---------- browser storage (may be unavailable: private windows, blocked site data) ----------
+  const store = {
+    get(k) { try { return window.localStorage.getItem(k); } catch (_) { return null; } },
+    set(k, v) { try { window.localStorage.setItem(k, v); } catch (_) { /* not saved */ } },
+  };
+  const KEY_DRAW = 'nakseo.drawing.v1', KEY_THEME = 'nakseo.theme';
+
   // ---------- theme ----------
   let C = {};
   const lum = (hex) => {
@@ -978,7 +995,16 @@ const Samples = (() => {
       pens: [0, 1, 2, 3, 4].map((i) => g('--pen' + i)),
     };
     C.dark = lum(C.paper) < 0.4;
+    const tb = $('themeBtn'), to = C.dark ? 'light' : 'dark';
+    const label = to === 'light' ? '라이트 모드로 바꾸기' : '다크 모드로 바꾸기';
+    tb.dataset.to = to; tb.setAttribute('aria-label', label); tb.title = label;
     drawSpark();
+  }
+  function toggleTheme() {
+    const to = C.dark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-pick', to);
+    store.set(KEY_THEME, to);
+    readColors();
   }
 
   // ---------- state ----------
@@ -986,7 +1012,7 @@ const Samples = (() => {
     mode: 'draw', strokes: [], cur: null, pid: null, example: null, exAnim: null, color: 0,
     body: null, evo: null, speed: 1, userSpeed: false, acc: 0, holdUntil: 0,
     leader: 0, camX: 0, xray: false, birth: null, cmp: null,
-    announced: new Set(), lastImprove: 1, stallSaid: false, sparkHover: -1,
+    announced: new Set(), lastImprove: 1, stallSaid: false, sparkHover: -1, restored: false,
   };
 
   // ---------- layout ----------
@@ -1004,9 +1030,9 @@ const Samples = (() => {
     L.ppu = clamp(Math.min(sh * 0.34, W * 0.245), 56, 170);
     $('bubble').style.top = (L.top + 12) + 'px';
     const band = L.bot - L.ground;
-    const ib = $('infoBtn');
-    if (band > 96) { ib.style.top = ''; ib.style.bottom = (H - L.bot + 12) + 'px'; }
-    else { ib.style.bottom = ''; ib.style.top = (L.top + 12) + 'px'; }
+    const ft = $('floatTools');
+    if (band > 64) { ft.style.top = ''; ft.style.bottom = (H - L.bot + 12) + 'px'; }
+    else { ft.style.bottom = ''; ft.style.top = (L.top + 12) + 'px'; }
     const lh = (L.bot - L.top) / 2;
     $('laneA').style.top = (L.top + 10) + 'px';
     $('laneB').style.top = (L.top + lh + 10) + 'px';
@@ -1223,7 +1249,7 @@ const Samples = (() => {
       const A = S.exAnim, p = clamp((now - A.start) / A.dur, 0, 1);
       let left = Math.floor(p * A.total);
       for (const st of A.strokes) { if (left <= 0) break; rawStroke(st, left); left -= st.pts.length; }
-      if (p >= 1) { S.strokes = A.strokes; S.exAnim = null; syncDraw(); }
+      if (p >= 1) { S.strokes = A.strokes; S.exAnim = null; syncDraw(); saveDrawing(); }
       return;
     }
     for (const st of S.strokes) rawStroke(st);
@@ -1234,12 +1260,41 @@ const Samples = (() => {
       ctx.fillStyle = C.inkFaint;
       ctx.font = `700 30px ${HAND}`; ctx.fillText('여기에 아무거나 그려봐', W / 2, midY);
       ctx.font = `700 19px ${HAND}`; ctx.fillText('감자, 공룡, 삐뚤빼뚤한 동그라미 뭐든 좋아', W / 2, midY + 30);
-    } else if (S.example && !S.cur) {
+    } else if ((S.example || S.restored) && !S.cur) {
       let top = Infinity;
       for (const st of S.strokes) for (const p of st.pts) top = Math.min(top, p.y);
       ctx.fillStyle = C.inkFaint; ctx.font = `700 18px ${HAND}`;
-      ctx.fillText('예시 그림이야. 그리기 시작하면 지워져.', W / 2, Math.max(L.top + 26, top - 16));
+      ctx.fillText(S.example ? '예시 그림이야. 그리기 시작하면 지워져.' : '지난번에 그린 그림이야. 이어서 그려도 돼.', W / 2, Math.max(L.top + 26, top - 16));
     }
+  }
+  function saveDrawing() {
+    const r = (v) => Math.round(v * 10) / 10;
+    store.set(KEY_DRAW, JSON.stringify({
+      color: S.color, example: S.example,
+      strokes: S.strokes.map((st) => ({ c: st.c, w: st.w, pts: st.pts.map((p) => [r(p.x), r(p.y)]) })),
+    }));
+  }
+  function loadDrawing() {
+    const raw = store.get(KEY_DRAW);
+    if (!raw) return null;
+    try {
+      const d = JSON.parse(raw);
+      if (!d || !Array.isArray(d.strokes)) return null;
+      const strokes = d.strokes
+        .filter((st) => st && Array.isArray(st.pts) && st.pts.length)
+        .map((st) => ({ c: clamp(st.c | 0, 0, 4), w: +st.w || PEN_W, pts: st.pts.map((q) => ({ x: +q[0], y: +q[1] })) }))
+        .filter((st) => st.pts.every((q) => Number.isFinite(q.x) && Number.isFinite(q.y)));
+      return { strokes, example: typeof d.example === 'string' && Samples[d.example] ? d.example : null, color: clamp(d.color | 0, 0, 4) };
+    } catch (_) { return null; }
+  }
+  // a drawing saved on another screen size is shrunk and centred if it no longer fits
+  function fitToStage(strokes) {
+    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+    for (const st of strokes) for (const p of st.pts) { a = Math.min(a, p.x); b = Math.min(b, p.y); c = Math.max(c, p.x); d = Math.max(d, p.y); }
+    if (a >= 16 && c <= W - 16 && b >= L.top + 8 && d <= L.bot - 8) return strokes;
+    const sc = Math.min(1, (W - 32) / Math.max(1, c - a), (L.ground - L.top - 40) / Math.max(1, d - b));
+    const ox = W / 2 - ((a + c) / 2) * sc, oy = L.ground - 14 - d * sc;
+    return strokes.map((st) => ({ c: st.c, w: st.w, pts: st.pts.map((p) => ({ x: ox + p.x * sc, y: oy + p.y * sc })) }));
   }
   function syncDraw() {
     const has = S.strokes.length > 0, busy = !!S.exAnim;
@@ -1254,6 +1309,7 @@ const Samples = (() => {
   cv.addEventListener('pointerdown', (e) => {
     if (S.mode !== 'draw' || S.exAnim || e.button > 0 || S.cur) return;
     if (S.example) { S.strokes = []; S.example = null; }
+    S.restored = false;
     try { cv.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
     S.pid = e.pointerId;
     S.cur = { c: S.color, w: PEN_W, pts: [pointOf(e)] };
@@ -1269,7 +1325,7 @@ const Samples = (() => {
   });
   const endStroke = (e) => {
     if (!S.cur || e.pointerId !== S.pid) return;
-    S.strokes.push(S.cur); S.cur = null; S.pid = null; syncDraw();
+    S.strokes.push(S.cur); S.cur = null; S.pid = null; syncDraw(); saveDrawing();
   };
   cv.addEventListener('pointerup', endStroke);
   cv.addEventListener('pointercancel', endStroke);
@@ -1285,7 +1341,7 @@ const Samples = (() => {
   }
   function playExample(name, animate) {
     const strokes = exampleStrokes(name);
-    S.example = name; S.cur = null;
+    S.example = name; S.cur = null; S.restored = false;
     if (!animate) { S.strokes = strokes; S.exAnim = null; syncDraw(); return; }
     S.strokes = [];
     S.exAnim = { strokes, start: performance.now(), dur: 1000, total: strokes.reduce((t, s) => t + s.pts.length, 0) };
@@ -1558,13 +1614,15 @@ const Samples = (() => {
   }
 
   // ---------- controls ----------
-  for (const b of document.querySelectorAll('.sw')) b.addEventListener('click', () => {
-    S.color = +b.dataset.c;
-    for (const o of document.querySelectorAll('.sw')) o.setAttribute('aria-checked', String(o === b));
-  });
+  function pickColor(c) {
+    S.color = c;
+    for (const o of document.querySelectorAll('.sw')) o.setAttribute('aria-checked', String(+o.dataset.c === c));
+  }
+  for (const b of document.querySelectorAll('.sw')) b.addEventListener('click', () => { pickColor(+b.dataset.c); saveDrawing(); });
   for (const b of document.querySelectorAll('.ex')) b.addEventListener('click', () => playExample(b.dataset.ex, true));
-  $('undoBtn').addEventListener('click', () => { S.strokes.pop(); if (!S.strokes.length) S.example = null; syncDraw(); });
-  $('clearBtn').addEventListener('click', () => { S.strokes = []; S.example = null; syncDraw(); });
+  $('undoBtn').addEventListener('click', () => { S.strokes.pop(); if (!S.strokes.length) { S.example = null; S.restored = false; } syncDraw(); saveDrawing(); });
+  $('clearBtn').addEventListener('click', () => { S.strokes = []; S.example = null; S.restored = false; syncDraw(); saveDrawing(); });
+  $('themeBtn').addEventListener('click', toggleTheme);
   $('goBtn').addEventListener('click', comeAlive);
   for (const b of document.querySelectorAll('.seg button')) b.addEventListener('click', () => setSpeed(+b.dataset.speed, true));
   const toggleXray = () => {
@@ -1595,15 +1653,20 @@ const Samples = (() => {
   window.addEventListener('resize', layout);
   const mq = window.matchMedia('(prefers-color-scheme: dark)');
   if (mq.addEventListener) mq.addEventListener('change', readColors);
-  new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'style'] });
+  new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-pick', 'class', 'style'] });
 
   // ---------- boot ----------
   const hot = window.claude && window.claude.hot;
   if (hot && hot.snapshot) hot.snapshot(() => ({ strokes: S.strokes, example: S.example }));
   function boot(data) {
     readColors(); layout();
-    if (data && Array.isArray(data.strokes) && data.strokes.length) { S.strokes = data.strokes; S.example = data.example || null; syncDraw(); }
-    else playExample('potato', false);
+    const saved = data && Array.isArray(data.strokes) && data.strokes.length
+      ? { strokes: data.strokes, example: data.example || null, color: S.color }
+      : loadDrawing();
+    if (saved && saved.strokes.length) {
+      S.strokes = fitToStage(saved.strokes); S.example = saved.example; S.restored = !saved.example;
+      pickColor(saved.color); syncDraw();
+    } else playExample('potato', false);
     requestAnimationFrame((t) => { last = t; frame(t); });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
   }
