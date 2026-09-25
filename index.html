@@ -163,6 +163,10 @@ button { font: inherit; color: inherit; }
 }
 .cta:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
 .cta:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.cta-row { display: flex; gap: 10px; align-items: stretch; }
+.cta-row .cta { flex: 1; width: auto; }
+.resume { display: grid; place-content: center; gap: 1px; padding: 6px 14px; text-align: center; line-height: 1.2; }
+.resume span { font-size: 12px; font-weight: 500; color: var(--ink-soft); }
 .nudge { animation: nudge 1.2s ease-in-out 3; }
 @keyframes nudge { 50% { background: var(--hl); color: var(--hl-ink); border-color: var(--ink); } }
 
@@ -339,7 +343,10 @@ summary { cursor: pointer; font-weight: 600; }
           <button class="ex" type="button" data-ex="star">별</button>
           <button class="ex" type="button" data-ex="octopus">문어</button>
         </div>
-        <button id="goBtn" class="cta" type="button">살아나라!</button>
+        <div class="cta-row">
+          <button id="goBtn" class="cta" type="button">살아나라!</button>
+          <button id="resumeBtn" class="tool resume" type="button" hidden><b>이어서 진화</b><span id="resumeGen">1세대부터</span></button>
+        </div>
       </div>
 
       <div class="evo-only" style="display:contents">
@@ -385,7 +392,7 @@ summary { cursor: pointer; font-weight: 600; }
       </div>
       <p class="lede">큰 진화가 일어난 세대만 적어. 새 걸음을 찾았을 때, 기록이 한 세대 만에 크게 뛰었을 때(0.4m 이상이면서 30% 이상), 1m·3m·5m·10m 같은 거리를 처음 넘었을 때야.</p>
       <p class="board-stats" id="boardStats"></p>
-      <p class="lede" style="margin-top:0">기록판을 보는 동안에는 경주가 잠깐 멈춰.</p>
+      <p class="lede" style="margin-top:0">기록판을 보는 동안에는 경주가 잠깐 멈춰. 진화 기록과 기록판은 이 브라우저에 저장돼서, 다시 열면 이어서 볼 수 있어.</p>
       <ol class="board" id="boardList"></ol>
     </div>
   </div>
@@ -428,12 +435,15 @@ const Engine = (() => {
   // ---------- random ----------
   function rngFrom(seed) {
     let a = seed >>> 0;
-    return function () {
+    const next = function () {
       a = (a + 0x6D2B79F5) | 0;
       let t = Math.imul(a ^ (a >>> 15), 1 | a);
       t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
+    next.state = () => a;
+    next.setState = (v) => { a = v | 0; };
+    return next;
   }
   function gauss(rng) {
     let u = 0;
@@ -972,6 +982,30 @@ const Engine = (() => {
       this.gen++;
       return rec;
     }
+    // Plain data for saving. Taken at any moment it describes the start of the current race:
+    // the population's genomes and the random state are only touched between races.
+    snapshot() {
+      const g = (x) => ({ freq: x.freq, amp: Array.from(x.amp), phase: Array.from(x.phase) });
+      return {
+        seed: this.seed, rng: this.rng.state(), gen: this.gen, size: this.size,
+        pop: this.pop.map((c) => g(c.genome)),
+        history: this.history.map((r) => ({ gen: r.gen, best: r.best, median: r.median, worst: r.worst, gait: r.gait, genome: r.genome ? g(r.genome) : null })),
+      };
+    }
+    static restore(body, d) {
+      const K = body.K;
+      const G = (x) => {
+        if (!x) return null;
+        if (!(x.amp.length === K && x.phase.length === K && Number.isFinite(x.freq))) throw new Error('genome shape');
+        return { freq: +x.freq, amp: Float64Array.from(x.amp), phase: Float64Array.from(x.phase) };
+      };
+      if (!Array.isArray(d.pop) || d.pop.length !== d.size || !Array.isArray(d.history)) throw new Error('snapshot shape');
+      const e = new Evolution(body, d.seed, d.size);
+      e.rng.setState(d.rng); e.gen = d.gen | 0;
+      e.history = d.history.map((r) => ({ gen: r.gen, best: +r.best, median: +r.median, worst: +r.worst, gait: r.gait, genome: G(r.genome) }));
+      d.pop.forEach((x, i) => { e.pop[i].genome = G(x); e.pop[i].reset(); });
+      return e;
+    }
   }
 
   return { P, rngFrom, buildBody, Creature, Evolution, randomGenome, cloneGenome };
@@ -1043,7 +1077,7 @@ const Samples = (() => {
     get(k) { try { return window.localStorage.getItem(k); } catch (_) { return null; } },
     set(k, v) { try { window.localStorage.setItem(k, v); } catch (_) { /* not saved */ } },
   };
-  const KEY_DRAW = 'nakseo.drawing.v1', KEY_THEME = 'nakseo.theme';
+  const KEY_DRAW = 'nakseo.drawing.v1', KEY_THEME = 'nakseo.theme', KEY_EVO = 'nakseo.evolution.v1';
 
   // ---------- theme ----------
   let C = {};
@@ -1079,7 +1113,7 @@ const Samples = (() => {
     body: null, evo: null, speed: 1, userSpeed: false, acc: 0, holdUntil: 0,
     leader: 0, camX: 0, xray: false, birth: null, cmp: null,
     announced: new Set(), lastImprove: 1, stallSaid: false, sparkHover: -1, restored: false,
-    board: [], unread: 0,
+    board: [], unread: 0, evoStrokes: null, pendingSave: null,
   };
 
   // ---------- layout ----------
@@ -1420,6 +1454,8 @@ const Samples = (() => {
     $('bottom').inert = m === 'birth';
     $('infoBtn').inert = m === 'birth';
     layout();
+    if (m === 'draw') syncResume();
+    if (S.evo && m !== 'birth') queueSave();
   }
   let bubbleTimer = 0;
   function say(text, ms) {
@@ -1438,13 +1474,16 @@ const Samples = (() => {
     if (!S.userSpeed) setSpeed(1, false);
     $('compareBtn').disabled = true;
     hud.gen = hud.best = hud.gait = null;
+    S.pendingSave = null;
     updateHUD(); drawSpark();
+    saveEvolution();
   }
   function comeAlive() {
     if (!S.strokes.length || S.exAnim) return;
     const body = Engine.buildBody(S.strokes);
     if (body.error) { say(body.error === 'small' ? '조금만 더 크게 그려줘!' : '먼저 뭔가 그려줘!', 2600); return; }
     S.body = body;
+    S.evoStrokes = packStrokes(S.strokes);
     const from = drawView(), m = body.map;
     const drawMap = { ax: m.minx + m.comx / m.sc, ay: m.maxy - (m.lowy - 0.04) / m.sc, k: 1 / m.sc };
     newEvolution();
@@ -1496,7 +1535,7 @@ const Samples = (() => {
 
   // ---------- evolution ----------
   function setSpeed(v, byUser) {
-    S.speed = v; if (byUser) S.userSpeed = true;
+    S.speed = v; if (byUser) { S.userSpeed = true; queueSave(); }
     for (const b of document.querySelectorAll('.seg button')) b.setAttribute('aria-pressed', String(+b.dataset.speed === v));
   }
   // only big steps make it onto the record board: a new gait, a big one-generation leap, or a first distance mark
@@ -1539,6 +1578,7 @@ const Samples = (() => {
     if (key !== 'wiggle' && key !== 'back') S.announced.add(key);
     $('compareBtn').disabled = h.length < 2;
     drawSpark();
+    queueSave();
   }
   function updateEvolve(dt, now) {
     const evo = S.evo;
@@ -1637,6 +1677,77 @@ const Samples = (() => {
   $('spark').addEventListener('pointerdown', sparkPointer);
   $('spark').addEventListener('pointerleave', () => { S.sparkHover = -1; $('sparkTip').hidden = true; drawSpark(); });
 
+  // ---------- saving the evolution (with its record board) ----------
+  // The body is rebuilt from the exact strokes it was born from, so every saved genome replays identically.
+  const packStrokes = (list) => list.map((st) => ({ c: st.c, w: st.w, pts: st.pts.map((p) => [p.x, p.y]) }));
+  const unpackStrokes = (list) => list.map((st) => ({ c: clamp(st.c | 0, 0, 4), w: +st.w || PEN_W, pts: st.pts.map((q) => ({ x: +q[0], y: +q[1] })) }));
+  function evolutionRecord() {
+    return {
+      v: 1, where: S.mode === 'draw' ? 'draw' : 'race', savedAt: Date.now(),
+      strokes: S.evoStrokes, n: S.body.n, K: S.body.K, evo: S.evo.snapshot(),
+      board: S.board, unread: S.unread, announced: [...S.announced],
+      lastImprove: S.lastImprove, stallSaid: S.stallSaid, speed: S.speed, userSpeed: S.userSpeed,
+    };
+  }
+  // very long runs: keep every genome that the board, chips and recent races need, thin out the rest
+  function thinned(rec, every) {
+    const keep = new Set(S.board.map((e) => e.gen));
+    const h = rec.evo.history, last = h.length;
+    rec.evo.history = h.map((r) => (r.gen === 1 || keep.has(r.gen) || r.gen > last - 60 || r.gen % every === 0 ? r : { ...r, genome: null }));
+    return rec;
+  }
+  let saveTimer = 0, lastSaveAt = 0;
+  function saveEvolution() {
+    clearTimeout(saveTimer); saveTimer = 0; lastSaveAt = performance.now();
+    if (!S.evo || !S.body || !S.evoStrokes) return;
+    let json = JSON.stringify(evolutionRecord());
+    if (json.length > 3e6) json = JSON.stringify(thinned(evolutionRecord(), 10));
+    try { window.localStorage.setItem(KEY_EVO, json); }
+    catch (_) { store.set(KEY_EVO, JSON.stringify(thinned(evolutionRecord(), 50))); }
+  }
+  function queueSave() {
+    if (saveTimer || !S.evo) return;
+    saveTimer = setTimeout(saveEvolution, Math.max(0, 1500 - (performance.now() - lastSaveAt)));
+  }
+  function loadEvolution() {
+    const raw = store.get(KEY_EVO);
+    if (!raw) return null;
+    try {
+      const d = JSON.parse(raw);
+      if (!d || d.v !== 1 || !Array.isArray(d.strokes) || !d.evo || !Array.isArray(d.board)) return null;
+      return d;
+    } catch (_) { return null; }
+  }
+  function forgetEvolution() { try { window.localStorage.removeItem(KEY_EVO); } catch (_) { /* nothing saved */ } }
+  // bring a saved evolution back to life; false when it no longer matches (then it is dropped)
+  function resumeFrom(d) {
+    let body, evo;
+    try {
+      body = Engine.buildBody(unpackStrokes(d.strokes));
+      if (body.error || body.n !== d.n || body.K !== d.K) throw new Error('body changed');
+      evo = Engine.Evolution.restore(body, d.evo);
+    } catch (_) { forgetEvolution(); S.pendingSave = null; return false; }
+    S.body = body; S.evo = evo; S.evoStrokes = d.strokes; S.pendingSave = null;
+    S.acc = 0; S.holdUntil = 0; S.leader = 0; S.camX = 0; S.sparkHover = -1;
+    S.board = d.board; S.unread = d.unread | 0; S.announced = new Set(d.announced || []);
+    S.lastImprove = d.lastImprove || 1; S.stallSaid = !!d.stallSaid;
+    S.userSpeed = !!d.userSpeed; setSpeed([1, 4, 99].includes(d.speed) ? d.speed : 1, false);
+    hud.gen = hud.best = hud.gait = hud.clock = null;
+    $('compareBtn').disabled = evo.history.length < 2;
+    syncBadge(); drawSpark();
+    return true;
+  }
+  function syncResume() {
+    const gen = S.evo ? S.evo.gen : S.pendingSave ? S.pendingSave.evo.gen : 0;
+    $('resumeBtn').hidden = !gen;
+    if (gen) $('resumeGen').textContent = `${gen}세대부터`;
+  }
+  function resumeEvolution() {
+    if (!S.evo && !(S.pendingSave && resumeFrom(S.pendingSave))) { syncResume(); say('저장된 진화를 불러오지 못했어. 새로 시작해줘.', 3000); return; }
+    hush(); setMode('evolve');
+    say(`다시 이어서 달려! 지금 ${S.evo.gen}세대야.`, 3000);
+  }
+
   // ---------- record board ----------
   const KIND = { start: '출발', gait: '새 걸음', leap: '큰 도약', mile: '거리 돌파' };
   function syncBadge() {
@@ -1676,7 +1787,7 @@ const Samples = (() => {
       list.append(li);
     }
   }
-  function openBoard() { S.unread = 0; syncBadge(); renderBoard(); $('board').hidden = false; $('boardClose').focus(); }
+  function openBoard() { S.unread = 0; syncBadge(); renderBoard(); $('board').hidden = false; $('boardClose').focus(); queueSave(); }
 
   // ---------- generation comparison: 1st, picked, latest ----------
   function enterCompare(want) {
@@ -1819,7 +1930,8 @@ const Samples = (() => {
   $('pickPrev').addEventListener('click', () => nudgePick(-1));
   $('pickNext').addEventListener('click', () => nudgePick(1));
   $('cmpClose').addEventListener('click', exitCompare);
-  $('redrawBtn').addEventListener('click', () => { hush(); S.evo = null; S.body = null; setMode('draw'); syncDraw(); });
+  $('redrawBtn').addEventListener('click', () => { hush(); setMode('draw'); syncDraw(); });
+  $('resumeBtn').addEventListener('click', resumeEvolution);
   $('restartBtn').addEventListener('click', () => { newEvolution(); say('같은 몸으로 처음부터 다시! 이번엔 어떤 걸음을 찾을까?', 3500); });
   const openInfo = () => {
     const b = S.body;
@@ -1842,6 +1954,8 @@ const Samples = (() => {
   });
 
   window.addEventListener('resize', layout);
+  document.addEventListener('visibilitychange', () => { if (document.hidden && S.evo) saveEvolution(); });
+  window.addEventListener('pagehide', () => { if (S.evo) saveEvolution(); });
   const mq = window.matchMedia('(prefers-color-scheme: dark)');
   if (mq.addEventListener) mq.addEventListener('change', readColors);
   new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-pick', 'class', 'style'] });
@@ -1858,6 +1972,13 @@ const Samples = (() => {
       S.strokes = fitToStage(saved.strokes); S.example = saved.example; S.restored = !saved.example;
       pickColor(saved.color); syncDraw();
     } else playExample('potato', false);
+    const ev = loadEvolution();
+    if (ev && ev.where === 'race' && resumeFrom(ev)) {
+      setMode('evolve');
+      say(`지난번 진화를 이어서 할게. ${S.evo.gen}세대부터 다시 달려!`, 4200);
+    } else if (ev && ev.where === 'draw') {
+      S.pendingSave = ev; syncResume();
+    }
     requestAnimationFrame((t) => { last = t; frame(t); });
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
   }
