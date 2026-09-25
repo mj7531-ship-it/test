@@ -1,0 +1,1614 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="손가락으로 그린 낙서가 말랑한 젤리 몸이 되어, 진화를 거듭하며 스스로 걷는 법을 배우는 페이지.">
+<title>낙서 걸음마</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+:root {
+  --paper: #F5F8FB;
+  --panel: #F5F8FBF0;
+  --grid: #DFE8F2;
+  --grid-major: #C3D3E5;
+  --ink: #1B2A40;
+  --ink-soft: #52627A;
+  --ink-faint: #8796AA;
+  --line: #D2DDE9;
+  --ground: #E6ECF3;
+  --btn: #FFFFFF;
+  --btn-line: #BCCADA;
+  --hl: #FFD43B;
+  --hl-ink: #2A2000;
+  --accent: #2F6FEB;
+  --muscle: #E5484D;
+  --scrim: #1B2A4059;
+  --pen0: #1B2A40;
+  --pen1: #E5484D;
+  --pen2: #2F6FEB;
+  --pen3: #1F9D63;
+  --pen4: #8E4EC6;
+  --font-hand: 'Gaegu', 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-ui: 'IBM Plex Sans KR', system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-num: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #111821; --panel: #111821F0; --grid: #19232F; --grid-major: #263345;
+    --ink: #E6EDF6; --ink-soft: #A1B1C6; --ink-faint: #6E8097; --line: #243142;
+    --ground: #0C1118; --btn: #18212D; --btn-line: #33445A;
+    --hl: #F5CB3E; --hl-ink: #231A00; --accent: #6EA2FF; --muscle: #FF6B6E; --scrim: #000000A0;
+    --pen0: #E6EDF6; --pen1: #FF6B6E; --pen2: #6EA2FF; --pen3: #41CC88; --pen4: #B584F3;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #111821; --panel: #111821F0; --grid: #19232F; --grid-major: #263345;
+  --ink: #E6EDF6; --ink-soft: #A1B1C6; --ink-faint: #6E8097; --line: #243142;
+  --ground: #0C1118; --btn: #18212D; --btn-line: #33445A;
+  --hl: #F5CB3E; --hl-ink: #231A00; --accent: #6EA2FF; --muscle: #FF6B6E; --scrim: #000000A0;
+  --pen0: #E6EDF6; --pen1: #FF6B6E; --pen2: #6EA2FF; --pen3: #41CC88; --pen4: #B584F3;
+  color-scheme: dark;
+}
+
+html, body { height: 100%; }
+body {
+  margin: 0; overflow: hidden;
+  background: var(--paper); color: var(--ink);
+  font-family: var(--font-ui); font-size: 14px; line-height: 1.5;
+  word-break: keep-all; overflow-wrap: break-word;
+  -webkit-tap-highlight-color: transparent;
+}
+[hidden] { display: none !important; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; }
+
+#app { position: relative; height: 100%; overflow: hidden; user-select: none; -webkit-user-select: none; }
+#stage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+/* mode switches */
+#app:not([data-mode="draw"]) .draw-only { display: none !important; }
+#app:not([data-mode="evolve"]) .evo-only { display: none !important; }
+#app:not([data-mode="compare"]) .cmp-only { display: none !important; }
+
+.band { position: absolute; left: 0; right: 0; z-index: 2; background: var(--panel); }
+.band > .inner { max-width: 920px; margin-inline: auto; padding-inline: 16px; }
+#top { top: 0; border-bottom: 1px solid var(--line); }
+#top > .inner { padding-block: 12px 10px; }
+#bottom { bottom: 0; border-top: 1px solid var(--line); }
+#bottom > .inner { padding-block: 10px 14px; display: flex; flex-direction: column; gap: 10px; }
+
+/* draw header */
+.draw-head h1 { margin: 0; font: 700 32px/1 var(--font-hand); letter-spacing: -0.01em; text-wrap: balance; }
+.draw-head p { margin: 4px 0 0; color: var(--ink-soft); font-size: 14px; text-wrap: balance; }
+
+/* race HUD */
+.hud { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.hud-main { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.gen { font-family: var(--font-hand); font-weight: 700; line-height: 0.9; display: flex; align-items: baseline; gap: 2px; }
+.gen b { font-size: 44px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.gen span { font-size: 22px; }
+.race { font-size: 12.5px; color: var(--ink-soft); display: flex; gap: 6px; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.bar { width: min(180px, 44vw); height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--ink); transform-origin: left center; transform: scaleX(0); }
+.chip {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 2px; padding: 2px 10px 2px 8px; border: 1.5px solid var(--ink); border-radius: 999px;
+  font-size: 12.5px; font-weight: 600; white-space: nowrap; background: var(--btn);
+}
+.chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--muscle); }
+.hud-rec { display: grid; justify-items: end; gap: 2px; }
+.rec-label { font-size: 12px; color: var(--ink-soft); }
+.rec { display: flex; align-items: baseline; gap: 2px; }
+.rec .num { font-size: 24px; line-height: 1; }
+.rec .unit { font-size: 14px; color: var(--ink-soft); }
+.spark-wrap { position: relative; width: 132px; height: 40px; margin-top: 4px; }
+#spark { width: 132px; height: 40px; display: block; touch-action: none; cursor: crosshair; }
+.legend { display: flex; gap: 10px; font-size: 11px; color: var(--ink-soft); }
+.legend span { display: inline-flex; align-items: center; gap: 4px; }
+.legend span::before { content: ""; width: 12px; height: 0; border-top: 2px solid var(--accent); }
+.legend span.med::before { border-top: 1.5px dashed var(--ink-faint); }
+.tip {
+  position: absolute; right: 0; top: calc(100% + 18px); z-index: 4; white-space: nowrap;
+  background: var(--btn); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px;
+  font-size: 12px; color: var(--ink); box-shadow: 0 4px 14px #0000001f;
+}
+.cmp-head h2 { margin: 0; font: 700 28px/1.05 var(--font-hand); text-wrap: balance; }
+.cmp-head p { margin: 4px 0 0; color: var(--ink-soft); font-size: 13.5px; text-wrap: balance; }
+
+/* controls */
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.row .grow { flex: 1; }
+.tool {
+  min-height: 40px; padding: 8px 12px; border-radius: 12px; cursor: pointer;
+  border: 1.5px solid var(--btn-line); background: var(--btn); color: var(--ink);
+  font-size: 14px; font-weight: 600; white-space: nowrap;
+}
+.tool:hover:not(:disabled) { border-color: var(--ink); }
+.tool:disabled { opacity: 0.42; cursor: not-allowed; }
+.tool[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.tool.strong { border-color: var(--ink); }
+.row.fill > .tool { flex: 1 1 0; }
+.seg { display: inline-flex; border: 1.5px solid var(--btn-line); border-radius: 12px; overflow: hidden; background: var(--btn); }
+.seg button { min-height: 37px; padding: 7px 11px; border: 0; background: transparent; cursor: pointer; font-size: 14px; font-weight: 600; }
+.seg button + button { border-left: 1.5px solid var(--btn-line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.swatches { display: flex; gap: 7px; }
+.sw {
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer; padding: 0;
+  border: 3px solid var(--btn); box-shadow: 0 0 0 1.5px var(--btn-line);
+}
+.sw[aria-checked="true"] { box-shadow: 0 0 0 2.5px var(--ink); }
+.sw[data-c="0"] { background: var(--pen0); } .sw[data-c="1"] { background: var(--pen1); }
+.sw[data-c="2"] { background: var(--pen2); } .sw[data-c="3"] { background: var(--pen3); }
+.sw[data-c="4"] { background: var(--pen4); }
+.ex-row .lbl { font-size: 12.5px; color: var(--ink-soft); margin-right: 2px; }
+.ex {
+  padding: 2px 12px 3px; border-radius: 999px; cursor: pointer; background: transparent;
+  border: 1.5px dashed var(--btn-line); font: 700 19px/1.3 var(--font-hand); color: var(--ink);
+}
+.ex:hover { border-color: var(--ink); border-style: solid; }
+.cta {
+  width: 100%; padding: 8px 12px 10px; cursor: pointer;
+  font: 700 28px/1.1 var(--font-hand); letter-spacing: 0.01em;
+  background: var(--hl); color: var(--hl-ink); border: 2px solid var(--ink);
+  border-radius: 255px 16px 225px 16px / 16px 225px 16px 255px;
+  box-shadow: 3px 3px 0 var(--ink); transition: transform 0.08s, box-shadow 0.08s;
+}
+.cta:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.cta:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.nudge { animation: nudge 1.2s ease-in-out 3; }
+@keyframes nudge { 50% { background: var(--hl); color: var(--hl-ink); border-color: var(--ink); } }
+
+/* floating bits */
+.bubble {
+  position: absolute; left: 50%; z-index: 3; transform: translate(-50%, -4px);
+  width: max-content; max-width: min(460px, calc(100% - 48px));
+  padding: 7px 14px 8px; background: var(--btn); color: var(--ink);
+  border: 1.5px solid var(--ink); border-radius: 16px 16px 16px 4px; box-shadow: 2px 2px 0 var(--ink);
+  font: 700 19px/1.3 var(--font-hand); text-align: center; text-wrap: balance;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s;
+}
+.bubble.show { opacity: 1; transform: translate(-50%, 0); }
+.float-info { position: absolute; right: 16px; z-index: 2; }
+.lane-label {
+  position: absolute; left: 16px; z-index: 2; display: flex; align-items: baseline; gap: 8px;
+  padding: 2px 10px 3px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line);
+  font: 700 19px/1.3 var(--font-hand);
+}
+.lane-label .num { font-size: 14px; font-weight: 500; }
+
+/* explainer sheet */
+.sheet { position: absolute; inset: 0; z-index: 6; background: var(--scrim); display: flex; align-items: flex-end; justify-content: center; }
+.sheet-card {
+  width: 100%; max-width: 640px; max-height: 88%; overflow: auto; box-sizing: border-box;
+  background: var(--paper); color: var(--ink); border-top: 1.5px solid var(--ink);
+  border-radius: 18px 18px 0 0; padding: 18px 16px 24px; user-select: text; -webkit-user-select: text;
+}
+@media (min-width: 700px) {
+  .sheet { align-items: center; }
+  .sheet-card { border: 1.5px solid var(--ink); border-radius: 18px; padding: 24px 28px 28px; }
+}
+.sheet-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.sheet h2 { margin: 0; font: 700 30px/1.1 var(--font-hand); text-wrap: balance; }
+.sheet .lede { margin: 6px 0 16px; color: var(--ink-soft); max-width: 60ch; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: st; }
+.steps li { display: grid; grid-template-columns: 34px 1fr; gap: 10px; counter-increment: st; }
+.steps li::before {
+  content: counter(st); width: 30px; height: 30px; display: grid; place-items: center;
+  border: 1.5px solid var(--ink); border-radius: 50% 45% 55% 50%; font: 700 19px/1 var(--font-hand);
+}
+.steps b { display: block; font-size: 15px; margin-bottom: 2px; }
+.steps p { margin: 0; color: var(--ink-soft); max-width: 60ch; }
+.steps .num { color: var(--ink); }
+details { margin-top: 18px; border-top: 1px dashed var(--btn-line); padding-top: 12px; }
+summary { cursor: pointer; font-weight: 600; }
+.tech { margin: 10px 0 0; padding-left: 18px; color: var(--ink-soft); display: grid; gap: 6px; font-size: 13px; }
+.tech b { color: var(--ink); font-weight: 600; }
+
+@media (max-width: 380px) {
+  .gen b { font-size: 38px; }
+  .seg button { padding: 7px 9px; }
+  .tool { padding: 8px 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bubble, .cta { transition: none; }
+  .nudge { animation: none; }
+}
+</style>
+</head>
+<body>
+<div id="app" data-mode="draw">
+  <canvas id="stage" aria-label="낙서를 그리고 낙서가 걷는 모습을 보는 화면"></canvas>
+
+  <header id="top" class="band">
+    <div class="inner">
+      <div class="draw-head draw-only">
+        <h1>낙서 걸음마</h1>
+        <p>아무거나 그려봐. 네 그림이 스스로 걷는 법을 배울 거야.</p>
+      </div>
+
+      <div class="hud evo-only">
+        <div class="hud-main">
+          <div class="gen"><b id="genNum">1</b><span>세대</span></div>
+          <div class="race"><span id="raceText">30마리 경주 중</span><span id="raceClock" class="num">0.0초</span></div>
+          <div class="bar" aria-hidden="true"><i id="raceBar"></i></div>
+          <div class="chip"><i aria-hidden="true"></i><span id="gaitText">걸음: 아직 몰라</span></div>
+        </div>
+        <div class="hud-rec">
+          <div class="rec-label">최고 기록</div>
+          <div class="rec"><span id="bestNum" class="num">–</span><span class="unit">m</span></div>
+          <div class="spark-wrap">
+            <canvas id="spark" role="img" aria-label="세대별 최고 기록과 중간값 그래프"></canvas>
+            <div id="sparkTip" class="tip" hidden></div>
+          </div>
+          <div class="legend" aria-hidden="true"><span>최고</span><span class="med">중간</span></div>
+        </div>
+      </div>
+
+      <div class="cmp-head cmp-only">
+        <h2 id="cmpTitle">1세대 vs 지금</h2>
+        <p>같은 몸, 같은 8초. 달라진 건 근육을 움직이는 박자뿐이야.</p>
+      </div>
+    </div>
+  </header>
+
+  <div id="bubble" class="bubble" role="status" aria-live="polite"></div>
+  <button id="infoBtn" class="tool float-info evo-only" type="button">어떻게 배워?</button>
+  <div id="laneA" class="lane-label cmp-only"><span>1세대 챔피언</span><span class="num" id="laneAd">0.00m</span></div>
+  <div id="laneB" class="lane-label cmp-only"><span id="laneBn">지금 챔피언</span><span class="num" id="laneBd">0.00m</span></div>
+
+  <footer id="bottom" class="band">
+    <div class="inner">
+      <div class="draw-only" style="display:contents">
+        <div class="row">
+          <div class="swatches" role="radiogroup" aria-label="펜 색깔">
+            <button class="sw" type="button" role="radio" data-c="0" aria-label="먹색" aria-checked="true"></button>
+            <button class="sw" type="button" role="radio" data-c="1" aria-label="빨강" aria-checked="false"></button>
+            <button class="sw" type="button" role="radio" data-c="2" aria-label="파랑" aria-checked="false"></button>
+            <button class="sw" type="button" role="radio" data-c="3" aria-label="초록" aria-checked="false"></button>
+            <button class="sw" type="button" role="radio" data-c="4" aria-label="보라" aria-checked="false"></button>
+          </div>
+          <div class="grow"></div>
+          <button id="undoBtn" class="tool" type="button">되돌리기</button>
+          <button id="clearBtn" class="tool" type="button">지우기</button>
+        </div>
+        <div class="row ex-row">
+          <span class="lbl">예시</span>
+          <button class="ex" type="button" data-ex="potato">감자</button>
+          <button class="ex" type="button" data-ex="dino">공룡</button>
+          <button class="ex" type="button" data-ex="star">별</button>
+          <button class="ex" type="button" data-ex="octopus">문어</button>
+        </div>
+        <button id="goBtn" class="cta" type="button">살아나라!</button>
+      </div>
+
+      <div class="evo-only" style="display:contents">
+        <div class="row">
+          <div class="seg" role="group" aria-label="재생 속도">
+            <button type="button" data-speed="1" aria-pressed="true">1배속</button>
+            <button type="button" data-speed="4" aria-pressed="false">4배속</button>
+            <button type="button" data-speed="99" aria-pressed="false">최대</button>
+          </div>
+          <div class="grow"></div>
+          <button id="xrayBtn" class="tool" type="button" aria-pressed="false">속 보기</button>
+        </div>
+        <div class="row fill">
+          <button id="compareBtn" class="tool strong" type="button" disabled>1세대와 비교</button>
+          <button id="redrawBtn" class="tool" type="button">다시 그리기</button>
+          <button id="restartBtn" class="tool" type="button">새로 진화</button>
+        </div>
+      </div>
+
+      <div class="cmp-only" style="display:contents">
+        <div class="row fill">
+          <button id="cmpXray" class="tool" type="button" aria-pressed="false">속 보기</button>
+          <button id="cmpClose" class="tool strong" type="button">경주로 돌아가기</button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div id="info" class="sheet" hidden>
+    <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+      <div class="sheet-head">
+        <h2 id="infoTitle">아무도 걷는 법을 가르치지 않았어</h2>
+        <button id="infoClose" class="tool" type="button">닫기</button>
+      </div>
+      <p class="lede">규칙은 딱 하나야. 멀리 간 녀석이 살아남아서 새끼를 남긴다. 걷기, 뛰기, 구르기는 전부 이 규칙에서 저절로 나와.</p>
+      <ol class="steps">
+        <li><div><b>젤리 몸 만들기</b><p>그림 안쪽을 채워서 말랑한 몸을 만들었어. 점 <span class="num" id="iN">0</span>개를 스프링 <span class="num" id="iM">0</span>개로 엮었고, 가느다란 선은 흐물거리지 않게 조금 두껍게 다듬었어.</p></div></li>
+        <li><div><b>근육 달기</b><p>몸을 <span class="num" id="iK">0</span>덩어리로 나누고 덩어리마다 근육을 달았어. 근육은 박자에 맞춰 줄었다 늘었다 해. 덩어리마다 힘과 타이밍이 다르고, 몸 전체의 템포도 있어. 이 숫자 <span class="num" id="iG">0</span>개가 이 녀석의 유전자야.</p></div></li>
+        <li><div><b>8초 달리기 시합</b><p>유전자만 다른 30마리가 동시에 달려. 오른쪽으로 멀리 간 거리가 점수야. 화면에 진하게 보이는 게 지금 1등이고, 흐릿한 건 나머지 29마리야.</p></div></li>
+        <li><div><b>다음 세대 만들기</b><p>상위 4마리는 그대로 살아남아. 나머지 자리는 잘 달린 녀석들의 유전자를 섞고(교배) 살짝 바꿔서(돌연변이) 채워. 매번 완전히 새로운 녀석도 한 마리 넣어.</p></div></li>
+        <li><div><b>계속 반복</b><p>세대가 쌓일수록 기록이 늘어. 같은 그림으로 새로 진화시켜도 매번 다른 걸음을 찾아내.</p></div></li>
+      </ol>
+      <details>
+        <summary>기술 메모</summary>
+        <ul class="tech">
+          <li><b>물리</b> XPBD 질량-스프링 soft body. 60Hz에 서브스텝 8번, 격자 모서리 스프링과 대각 스프링. 바닥 마찰은 관통 깊이로 수직항력을 근사한 쿨롱 마찰.</li>
+          <li><b>몸 생성</b> 획을 격자에 래스터화하고 닫힌 영역을 채워. 거리장으로 얇은 부분을 찾아 두께를 보정하고, 떨어진 조각은 최단 경로로 이어. 그다음 삼각 격자로 점을 뽑아. 원래 획은 삼각형 무게중심 좌표로 몸에 묶여서 같이 찌그러져.</li>
+          <li><b>근육</b> 덩어리별 사인파 리듬 생성기(CPG). 진폭 0~0.3, 주파수 0.4~3Hz.</li>
+          <li><b>진화</b> 개체 30, 엘리트 4, 1등 미세 변이 6, 무작위 이민 1, 나머지는 토너먼트(3) 선택 + 균등 교차 + 가우시안 변이.</li>
+          <li><b>재현</b> 시뮬레이션이 결정론적이라 같은 유전자는 언제 돌려도 똑같이 움직여. 그래서 1세대 챔피언을 그대로 다시 불러와 비교할 수 있어.</li>
+          <li><b>구성</b> 외부 라이브러리 없이 이 페이지 하나에 전부 들어 있어. 이미지 생성이나 AI 모델 호출도 없어.</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== ENGINE START (pure JS, no DOM) ===== */
+const Engine = (() => {
+  'use strict';
+  const TAU = Math.PI * 2;
+
+  // ---------- random ----------
+  function rngFrom(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(rng) {
+    let u = 0;
+    while (u === 0) u = rng();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * rng());
+  }
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const wrap01 = (v) => v - Math.floor(v);
+
+  // ---------- physics constants ----------
+  const P = {
+    SUB: 8,              // substeps per 1/60 s frame
+    DT: 1 / 60,
+    GRAV: 9.8,
+    MU: 1.0,             // ground friction
+    ALPHA_EDGE: 6e-5,    // XPBD compliance (1/stiffness) for lattice edges
+    ALPHA_SHEAR: 2.5e-4, // compliance for cross (shear/bend) springs
+    DAMP: 0.6,           // global velocity damping per second
+    RAMP0: 0.25, RAMP1: 0.9, // muscle warm-up window (s)
+    GEN_T: 8,            // seconds per race
+    SIZE: 1.0,           // doodle is scaled so its longest side is 1 m
+    TARGET_NODES: 40,
+  };
+
+  // ---------- raster helpers ----------
+  function stampCapsule(mask, gw, gh, ox, oy, cell, ax, ay, bx, by, r) {
+    const minx = Math.min(ax, bx) - r, maxx = Math.max(ax, bx) + r;
+    const miny = Math.min(ay, by) - r, maxy = Math.max(ay, by) + r;
+    const i0 = Math.max(0, Math.floor((minx - ox) / cell)), i1 = Math.min(gw - 1, Math.floor((maxx - ox) / cell));
+    const j0 = Math.max(0, Math.floor((miny - oy) / cell)), j1 = Math.min(gh - 1, Math.floor((maxy - oy) / cell));
+    const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy, r2 = r * r;
+    for (let j = j0; j <= j1; j++) {
+      const cy = oy + (j + 0.5) * cell;
+      for (let i = i0; i <= i1; i++) {
+        const cx = ox + (i + 0.5) * cell;
+        let t = L2 > 0 ? ((cx - ax) * dx + (cy - ay) * dy) / L2 : 0;
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex = ax + dx * t - cx, ey = ay + dy * t - cy;
+        if (ex * ex + ey * ey <= r2) mask[j * gw + i] = 1;
+      }
+    }
+  }
+  function stampDiscCells(mask, gw, gh, ci, cj, rc) {
+    const R = Math.ceil(rc), r2 = rc * rc;
+    for (let dj = -R; dj <= R; dj++) {
+      const j = cj + dj; if (j < 0 || j >= gh) continue;
+      for (let di = -R; di <= R; di++) {
+        const i = ci + di; if (i < 0 || i >= gw) continue;
+        if (di * di + dj * dj <= r2) mask[j * gw + i] = 1;
+      }
+    }
+  }
+  // flood the outside; any empty cell the flood can't reach is enclosed -> fill it
+  function fillHoles(mask, gw, gh) {
+    const out = new Uint8Array(gw * gh), q = new Int32Array(gw * gh);
+    let qh = 0, qt = 0;
+    const push = (k) => { if (!mask[k] && !out[k]) { out[k] = 1; q[qt++] = k; } };
+    for (let i = 0; i < gw; i++) { push(i); push((gh - 1) * gw + i); }
+    for (let j = 0; j < gh; j++) { push(j * gw); push(j * gw + gw - 1); }
+    while (qh < qt) {
+      const k = q[qh++], i = k % gw, j = (k / gw) | 0;
+      if (i > 0) push(k - 1); if (i < gw - 1) push(k + 1);
+      if (j > 0) push(k - gw); if (j < gh - 1) push(k + gw);
+    }
+    for (let k = 0; k < mask.length; k++) if (!mask[k] && !out[k]) mask[k] = 1;
+  }
+  // chamfer distance (in cells) from each filled cell to the nearest empty cell
+  function distField(mask, gw, gh) {
+    const D = new Float32Array(gw * gh), S = Math.SQRT2;
+    for (let k = 0; k < D.length; k++) D[k] = mask[k] ? 1e9 : 0;
+    const get = (i, j) => (i < 0 || j < 0 || i >= gw || j >= gh ? 0 : D[j * gw + i]);
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
+      const k = j * gw + i; if (!mask[k]) continue;
+      D[k] = Math.min(D[k], get(i - 1, j) + 1, get(i, j - 1) + 1, get(i - 1, j - 1) + S, get(i + 1, j - 1) + S);
+    }
+    for (let j = gh - 1; j >= 0; j--) for (let i = gw - 1; i >= 0; i--) {
+      const k = j * gw + i; if (!mask[k]) continue;
+      D[k] = Math.min(D[k], get(i + 1, j) + 1, get(i, j + 1) + 1, get(i + 1, j + 1) + S, get(i - 1, j + 1) + S);
+    }
+    return D;
+  }
+  // give skinny parts (lines, limbs) at least `rc` cells of half-thickness
+  function thicken(mask, gw, gh, rc) {
+    const D = distField(mask, gw, gh), add = [];
+    for (let j = 1; j < gh - 1; j++) for (let i = 1; i < gw - 1; i++) {
+      const k = j * gw + i, d = D[k];
+      if (!mask[k] || d >= rc) continue;
+      let ridge = true;
+      for (let dj = -1; dj <= 1 && ridge; dj++) for (let di = -1; di <= 1; di++) {
+        if (D[k + dj * gw + di] > d + 1e-3) { ridge = false; break; }
+      }
+      if (ridge) add.push(i, j);
+    }
+    for (let a = 0; a < add.length; a += 2) stampDiscCells(mask, gw, gh, add[a], add[a + 1], rc);
+  }
+  function labelComponents(mask, gw, gh) {
+    const lab = new Int32Array(gw * gh).fill(-1), sizes = [], q = new Int32Array(gw * gh);
+    for (let s = 0; s < mask.length; s++) {
+      if (!mask[s] || lab[s] >= 0) continue;
+      const id = sizes.length; let qh = 0, qt = 0, n = 0;
+      lab[s] = id; q[qt++] = s;
+      while (qh < qt) {
+        const k = q[qh++], i = k % gw, j = (k / gw) | 0; n++;
+        for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+          const ii = i + di, jj = j + dj;
+          if (ii < 0 || jj < 0 || ii >= gw || jj >= gh) continue;
+          const kk = jj * gw + ii;
+          if (mask[kk] && lab[kk] < 0) { lab[kk] = id; q[qt++] = kk; }
+        }
+      }
+      sizes.push(n);
+    }
+    return { lab, sizes };
+  }
+  // join separate pieces with a jelly "neck" along the shortest gap
+  function bridge(mask, gw, gh, rc) {
+    for (let guard = 0; guard < 12; guard++) {
+      const { lab, sizes } = labelComponents(mask, gw, gh);
+      if (sizes.length <= 1) return;
+      let main = 0; for (let c = 1; c < sizes.length; c++) if (sizes[c] > sizes[main]) main = c;
+      const par = new Int32Array(gw * gh).fill(-2), q = new Int32Array(gw * gh);
+      let qh = 0, qt = 0, hit = -1;
+      for (let k = 0; k < mask.length; k++) if (lab[k] === main) { par[k] = -1; q[qt++] = k; }
+      while (qh < qt && hit < 0) {
+        const k = q[qh++], i = k % gw, j = (k / gw) | 0;
+        const nb = [i > 0 ? k - 1 : -1, i < gw - 1 ? k + 1 : -1, j > 0 ? k - gw : -1, j < gh - 1 ? k + gw : -1];
+        for (const kk of nb) {
+          if (kk < 0 || par[kk] !== -2) continue;
+          par[kk] = k;
+          if (mask[kk] && lab[kk] !== main) { hit = kk; break; }
+          q[qt++] = kk;
+        }
+      }
+      if (hit < 0) return;
+      for (let k = hit; k >= 0 && par[k] !== -1; k = par[k]) stampDiscCells(mask, gw, gh, k % gw, (k / gw) | 0, rc);
+    }
+  }
+
+  // ---------- body construction ----------
+  // strokes: [{c, w, pts:[{x,y},...]}] in screen px (y down)
+  function buildBody(strokes) {
+    let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity, npts = 0;
+    for (const s of strokes) for (const p of s.pts) {
+      npts++;
+      if (p.x < minx) minx = p.x; if (p.x > maxx) maxx = p.x;
+      if (p.y < miny) miny = p.y; if (p.y > maxy) maxy = p.y;
+    }
+    if (!npts) return { error: 'empty' };
+    const big = Math.max(maxx - minx, maxy - miny);
+    if (big < 24) return { error: 'small' };
+    const sc = P.SIZE / big;
+    const toN = (p) => [(p.x - minx) * sc, (maxy - p.y) * sc];
+    const ns = strokes.map((s) => ({ c: s.c, w: s.w * sc, pts: s.pts.map(toN) }));
+    const W = (maxx - minx) * sc, H = (maxy - miny) * sc;
+
+    const RES = 90, cell = P.SIZE / RES, pad = 22;
+    const gw = Math.ceil(W / cell) + pad * 2, gh = Math.ceil(H / cell) + pad * 2;
+    const ox = -pad * cell, oy = -pad * cell;
+
+    const base = new Uint8Array(gw * gh);
+    for (const s of ns) {
+      const r = Math.max(s.w * 0.5, cell * 1.2);
+      const pts = s.pts;
+      if (pts.length === 1) stampCapsule(base, gw, gh, ox, oy, cell, pts[0][0], pts[0][1], pts[0][0], pts[0][1], r);
+      for (let i = 1; i < pts.length; i++) stampCapsule(base, gw, gh, ox, oy, cell, pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1], r);
+    }
+    fillHoles(base, gw, gh);
+    const areaOf = (m) => { let c = 0; for (let k = 0; k < m.length; k++) c += m[k]; return c * cell * cell; };
+    const spacingFor = (A) => Math.sqrt(A / (P.TARGET_NODES * 0.866));
+
+    let s = spacingFor(areaOf(base)), mask = null;
+    for (let it = 0; it < 5; it++) {
+      const rc = (0.95 * s) / cell;
+      mask = base.slice();
+      bridge(mask, gw, gh, rc);
+      thicken(mask, gw, gh, rc);
+      fillHoles(mask, gw, gh);
+      const s2 = spacingFor(areaOf(mask));
+      if (Math.abs(s2 - s) < 0.02 * s) { s = s2; break; }
+      s = s2;
+    }
+
+    const inside = (x, y) => {
+      const i = Math.floor((x - ox) / cell), j = Math.floor((y - oy) / cell);
+      return i >= 0 && j >= 0 && i < gw && j < gh && mask[j * gw + i] === 1;
+    };
+    const rowH = s * Math.sqrt(3) / 2;
+    const lattice = (sp) => {
+      const rh = sp * Math.sqrt(3) / 2;
+      let best = null;
+      for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) {
+        const x0 = ox + (a / 3) * sp, y0 = oy + (b / 3) * rh, xs = [], ys = [];
+        for (let j = 0; y0 + j * rh < oy + gh * cell; j++) {
+          const y = y0 + j * rh, off = (j & 1) ? sp / 2 : 0;
+          for (let i = 0; x0 + off + i * sp < ox + gw * cell; i++) {
+            const x = x0 + off + i * sp;
+            if (inside(x, y)) { xs.push(x); ys.push(y); }
+          }
+        }
+        if (!best || xs.length > best.xs.length) best = { xs, ys };
+      }
+      return best;
+    };
+    let L = lattice(s);
+    for (let tries = 0; tries < 6 && (L.xs.length > 62 || L.xs.length < 18); tries++) {
+      s *= Math.sqrt(L.xs.length / (L.xs.length > 62 ? 50 : 26)) || 0.8;
+      L = lattice(s);
+    }
+    const n = L.xs.length;
+    if (n < 4) return { error: 'small' };
+    void rowH;
+
+    // springs
+    const sa = [], sb = [], L0 = [], kind = [];
+    const nbr = Array.from({ length: n }, () => new Set());
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      const d = Math.hypot(L.xs[j] - L.xs[i], L.ys[j] - L.ys[i]);
+      if (d < 1.08 * s) { sa.push(i); sb.push(j); L0.push(d); kind.push(0); nbr[i].add(j); nbr[j].add(i); }
+      else if (d < 1.8 * s) { sa.push(i); sb.push(j); L0.push(d); kind.push(1); }
+    }
+    // connectivity safety net: tie loose pieces to the main body
+    const comp = new Int32Array(n).fill(-1);
+    const adj = Array.from({ length: n }, () => []);
+    for (let e = 0; e < sa.length; e++) { adj[sa[e]].push(sb[e]); adj[sb[e]].push(sa[e]); }
+    let ncomp = 0;
+    for (let i = 0; i < n; i++) {
+      if (comp[i] >= 0) continue;
+      const st = [i]; comp[i] = ncomp;
+      while (st.length) { const u = st.pop(); for (const v of adj[u]) if (comp[v] < 0) { comp[v] = ncomp; st.push(v); } }
+      ncomp++;
+    }
+    if (ncomp > 1) {
+      const cnt = new Array(ncomp).fill(0); for (let i = 0; i < n; i++) cnt[comp[i]]++;
+      const main = cnt.indexOf(Math.max(...cnt));
+      for (let c = 0; c < ncomp; c++) {
+        if (c === main) continue;
+        const pairs = [];
+        for (let i = 0; i < n; i++) if (comp[i] === c) for (let j = 0; j < n; j++) if (comp[j] === main)
+          pairs.push([Math.hypot(L.xs[j] - L.xs[i], L.ys[j] - L.ys[i]), i, j]);
+        pairs.sort((p, q) => p[0] - q[0]);
+        for (let k = 0; k < Math.min(3, pairs.length); k++) { sa.push(pairs[k][1]); sb.push(pairs[k][2]); L0.push(pairs[k][0]); kind.push(1); }
+      }
+    }
+
+    // triangles (CCW, y up)
+    const tris = [];
+    for (let i = 0; i < n; i++) for (const j of nbr[i]) if (j > i) for (const k of nbr[j]) if (k > j && nbr[i].has(k)) {
+      const cr = (L.xs[j] - L.xs[i]) * (L.ys[k] - L.ys[i]) - (L.ys[j] - L.ys[i]) * (L.xs[k] - L.xs[i]);
+      if (cr > 0) tris.push(i, j, k); else tris.push(i, k, j);
+    }
+    const nt = tris.length / 3;
+
+    // boundary loops (edges used by exactly one triangle keep that triangle's direction)
+    const ecount = new Map();
+    const key = (a, b) => (a < b ? a * 4096 + b : b * 4096 + a);
+    for (let t = 0; t < nt; t++) for (let e = 0; e < 3; e++) {
+      const a = tris[3 * t + e], b = tris[3 * t + (e + 1) % 3], k = key(a, b);
+      ecount.set(k, (ecount.get(k) || 0) + 1);
+    }
+    const nextOf = new Map();
+    for (let t = 0; t < nt; t++) for (let e = 0; e < 3; e++) {
+      const a = tris[3 * t + e], b = tris[3 * t + (e + 1) % 3];
+      if (ecount.get(key(a, b)) === 1) { if (!nextOf.has(a)) nextOf.set(a, []); nextOf.get(a).push(b); }
+    }
+    const loops = [];
+    let guard = 0;
+    while (nextOf.size && guard++ < 1000) {
+      const startNode = nextOf.keys().next().value;
+      const loop = [startNode]; let cur = startNode;
+      for (let step = 0; step < 4 * n; step++) {
+        const list = nextOf.get(cur);
+        if (!list || !list.length) break;
+        const nx = list.pop(); if (!list.length) nextOf.delete(cur);
+        if (nx === startNode) break;
+        loop.push(nx); cur = nx;
+      }
+      if (loop.length >= 3) loops.push(Int32Array.from(loop));
+    }
+
+    // muscle groups: k-means over node positions
+    const K = clamp(Math.round(n / 5), 4, 10);
+    const rng = rngFrom(1234);
+    const cx = [], cy = [];
+    { // k-means++ seeding
+      const f = Math.floor(rng() * n); cx.push(L.xs[f]); cy.push(L.ys[f]);
+      while (cx.length < K) {
+        let far = 0, fd = -1;
+        for (let i = 0; i < n; i++) {
+          let md = Infinity;
+          for (let c = 0; c < cx.length; c++) md = Math.min(md, (L.xs[i] - cx[c]) ** 2 + (L.ys[i] - cy[c]) ** 2);
+          if (md > fd) { fd = md; far = i; }
+        }
+        cx.push(L.xs[far]); cy.push(L.ys[far]);
+      }
+    }
+    const nearestC = (x, y) => { let b = 0, bd = Infinity; for (let c = 0; c < K; c++) { const d = (x - cx[c]) ** 2 + (y - cy[c]) ** 2; if (d < bd) { bd = d; b = c; } } return b; };
+    for (let it = 0; it < 12; it++) {
+      const sx = new Array(K).fill(0), sy = new Array(K).fill(0), sn = new Array(K).fill(0);
+      for (let i = 0; i < n; i++) { const c = nearestC(L.xs[i], L.ys[i]); sx[c] += L.xs[i]; sy[c] += L.ys[i]; sn[c]++; }
+      for (let c = 0; c < K; c++) if (sn[c]) { cx[c] = sx[c] / sn[c]; cy[c] = sy[c] / sn[c]; }
+    }
+    const m = sa.length;
+    const sg = new Uint8Array(m);
+    for (let e = 0; e < m; e++) sg[e] = nearestC((L.xs[sa[e]] + L.xs[sb[e]]) / 2, (L.ys[sa[e]] + L.ys[sb[e]]) / 2);
+    const triG = new Uint8Array(nt);
+    for (let t = 0; t < nt; t++) {
+      const a = tris[3 * t], b = tris[3 * t + 1], c = tris[3 * t + 2];
+      triG[t] = nearestC((L.xs[a] + L.xs[b] + L.xs[c]) / 3, (L.ys[a] + L.ys[b] + L.ys[c]) / 3);
+    }
+
+    // re-centre: centre of mass at x = 0, lowest node on the ground
+    let comx = 0, lowy = Infinity;
+    for (let i = 0; i < n; i++) { comx += L.xs[i]; lowy = Math.min(lowy, L.ys[i]); }
+    comx /= n;
+    const rx = new Float64Array(n), ry = new Float64Array(n);
+    for (let i = 0; i < n; i++) { rx[i] = L.xs[i] - comx; ry[i] = L.ys[i] - lowy; }
+
+    // bind every stroke point to a triangle (affine map follows the jelly as it squishes)
+    const bindPoint = (X, Y) => {
+      let bestT = 0, bestD = Infinity, bb = null;
+      for (let t = 0; t < nt; t++) {
+        const a = tris[3 * t], b = tris[3 * t + 1], c = tris[3 * t + 2];
+        const x1 = rx[a], y1 = ry[a], x2 = rx[b], y2 = ry[b], x3 = rx[c], y3 = ry[c];
+        const det = (y2 - y3) * (x1 - x3) + (x3 - x2) * (y1 - y3);
+        const l1 = ((y2 - y3) * (X - x3) + (x3 - x2) * (Y - y3)) / det;
+        const l2 = ((y3 - y1) * (X - x3) + (x1 - x3) * (Y - y3)) / det;
+        const l3 = 1 - l1 - l2;
+        const out = Math.max(0, -l1, -l2, -l3);
+        const gx = (x1 + x2 + x3) / 3 - X, gy = (y1 + y2 + y3) / 3 - Y;
+        const d = out * 10 + Math.hypot(gx, gy) * (out > 0 ? 1 : 0.001);
+        if (d < bestD) { bestD = d; bestT = t; bb = [l1, l2, l3]; }
+      }
+      return [bestT, bb[0], bb[1], bb[2]];
+    };
+    const strokesOut = [];
+    const step = s / 5;
+    for (const st of ns) {
+      const res = [];
+      const pts = st.pts;
+      for (let i = 0; i < pts.length; i++) {
+        const X = pts[i][0] - comx, Y = pts[i][1] - lowy;
+        if (i > 0) {
+          const pX = pts[i - 1][0] - comx, pY = pts[i - 1][1] - lowy, d = Math.hypot(X - pX, Y - pY);
+          const k = Math.floor(d / step);
+          for (let q = 1; q < k; q++) res.push(pX + (X - pX) * q / k, pY + (Y - pY) * q / k);
+        }
+        res.push(X, Y);
+      }
+      const bind = new Float64Array((res.length / 2) * 4);
+      for (let i = 0; i < res.length / 2; i++) {
+        const b = bindPoint(res[2 * i], res[2 * i + 1]);
+        bind[4 * i] = b[0]; bind[4 * i + 1] = b[1]; bind[4 * i + 2] = b[2]; bind[4 * i + 3] = b[3];
+      }
+      strokesOut.push({ c: st.c, w: st.w, bind, count: res.length / 2 });
+    }
+
+    // stable-ish reference node for rotation tracking: farthest from centre
+    let refNode = 0, rd = -1;
+    const cyAvg = ry.reduce((a, b) => a + b, 0) / n;
+    for (let i = 0; i < n; i++) { const d = rx[i] * rx[i] + (ry[i] - cyAvg) ** 2; if (d > rd) { rd = d; refNode = i; } }
+
+    // the colour used most becomes the jelly tint
+    const use = {};
+    for (const st of strokesOut) use[st.c] = (use[st.c] || 0) + st.count;
+    const mainColor = +Object.keys(use).sort((a, b) => use[b] - use[a])[0] || 0;
+
+    const comp2 = new Float64Array(m);
+    for (let e = 0; e < m; e++) comp2[e] = kind[e] === 0 ? P.ALPHA_EDGE : P.ALPHA_SHEAR;
+
+    return {
+      n, m, K, s,
+      rx, ry,
+      sa: Uint16Array.from(sa), sb: Uint16Array.from(sb), L0: Float64Array.from(L0),
+      kind: Uint8Array.from(kind), sg, comp: comp2,
+      tris: Uint16Array.from(tris), nt, triG, loops,
+      strokes: strokesOut, refNode, mainColor,
+      // mapping back to the original drawing (screen px) for the birth animation
+      map: { minx, maxy, sc, comx, lowy },
+    };
+  }
+
+  // ---------- genome ----------
+  function randomGenome(rng, K) {
+    const amp = new Float64Array(K), phase = new Float64Array(K);
+    for (let k = 0; k < K; k++) { amp[k] = 0.02 + rng() * 0.1; phase[k] = rng(); }
+    return { freq: 0.6 + rng() * 1.2, amp, phase };
+  }
+  function cloneGenome(g) { return { freq: g.freq, amp: g.amp.slice(), phase: g.phase.slice() }; }
+  function mutate(g, rng, strength) {
+    const o = cloneGenome(g), K = o.amp.length, p = 1.6 / K;
+    let changed = false;
+    for (let k = 0; k < K; k++) {
+      if (rng() < p) { o.amp[k] = clamp(o.amp[k] + gauss(rng) * 0.07 * strength, 0, 0.3); changed = true; }
+      if (rng() < p) { o.phase[k] = wrap01(o.phase[k] + gauss(rng) * 0.12 * strength); changed = true; }
+    }
+    if (rng() < 0.3) { o.freq = clamp(o.freq * Math.exp(gauss(rng) * 0.15 * strength), 0.4, 3); changed = true; }
+    if (!changed) { const k = Math.floor(rng() * K); o.phase[k] = wrap01(o.phase[k] + gauss(rng) * 0.12 * strength); }
+    if (rng() < 0.04) { const k = Math.floor(rng() * K); o.amp[k] = rng() * 0.3; o.phase[k] = rng(); }
+    return o;
+  }
+  function crossover(a, b, rng) {
+    const o = cloneGenome(a);
+    for (let k = 0; k < o.amp.length; k++) if (rng() < 0.5) { o.amp[k] = b.amp[k]; o.phase[k] = b.phase[k]; }
+    if (rng() < 0.5) o.freq = b.freq;
+    return o;
+  }
+
+  // ---------- one creature ----------
+  class Creature {
+    constructor(body, genome) {
+      const n = body.n;
+      this.body = body; this.genome = genome;
+      this.x = new Float64Array(n); this.y = new Float64Array(n);
+      this.px = new Float64Array(n); this.py = new Float64Array(n);
+      this.vx = new Float64Array(n); this.vy = new Float64Array(n);
+      this.act = new Float64Array(body.K);
+      this.reset();
+    }
+    reset() {
+      const b = this.body;
+      for (let i = 0; i < b.n; i++) {
+        this.x[i] = b.rx[i]; this.y[i] = b.ry[i] + 0.04;
+        this.vx[i] = 0; this.vy[i] = 0;
+      }
+      this.t = 0; this.frames = 0; this.act.fill(1);
+      this.startX = this.comX();
+      this.air = 0; this.rot = 0; this.lastAng = this.angle();
+      this.wSum = 0; this.wSq = 0; this.maxX = this.startX;
+    }
+    comX() { let s = 0; const x = this.x; for (let i = 0; i < x.length; i++) s += x[i]; return s / x.length; }
+    comY() { let s = 0; const y = this.y; for (let i = 0; i < y.length; i++) s += y[i]; return s / y.length; }
+    angle() {
+      const r = this.body.refNode;
+      return Math.atan2(this.y[r] - this.comY(), this.x[r] - this.comX());
+    }
+    dist() { return this.comX() - this.startX; }
+    step() {
+      const b = this.body, n = b.n, m = b.m, K = b.K;
+      const x = this.x, y = this.y, px = this.px, py = this.py, vx = this.vx, vy = this.vy;
+      const sa = b.sa, sb = b.sb, L0 = b.L0, sg = b.sg, comp = b.comp;
+      const G = this.genome, act = this.act;
+      const SUB = P.SUB, h = P.DT / SUB, ih2 = 1 / (h * h), gh = P.GRAV * h, MU = P.MU;
+      const damp = 1 - P.DAMP * h;
+      for (let sub = 0; sub < SUB; sub++) {
+        const t = this.t;
+        const ramp = t < P.RAMP0 ? 0 : t < P.RAMP1 ? (t - P.RAMP0) / (P.RAMP1 - P.RAMP0) : 1;
+        const ph = G.freq * t;
+        for (let k = 0; k < K; k++) act[k] = 1 + ramp * G.amp[k] * Math.sin(TAU * (ph + G.phase[k]));
+        for (let i = 0; i < n; i++) {
+          px[i] = x[i]; py[i] = y[i];
+          vy[i] -= gh;
+          x[i] += vx[i] * h; y[i] += vy[i] * h;
+        }
+        for (let e = 0; e < m; e++) {
+          const i = sa[e], j = sb[e];
+          const dx = x[j] - x[i], dy = y[j] - y[i];
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < 1e-9) continue;
+          const C = d - L0[e] * act[sg[e]];
+          const corr = C / ((2 + comp[e] * ih2) * d);
+          const cx = dx * corr, cy = dy * corr;
+          x[i] += cx; y[i] += cy; x[j] -= cx; y[j] -= cy;
+        }
+        for (let i = 0; i < n; i++) {
+          if (y[i] < 0) {
+            const pen = -y[i]; y[i] = 0;
+            const dx = x[i] - px[i], lim = MU * pen;
+            if (dx > lim) x[i] -= lim; else if (dx < -lim) x[i] += lim; else x[i] = px[i];
+          }
+          vx[i] = (x[i] - px[i]) / h * damp;
+          vy[i] = (y[i] - py[i]) / h * damp;
+        }
+        this.t += h;
+      }
+      // gait bookkeeping (once per frame)
+      this.frames++;
+      let low = Infinity, mnx = Infinity, mxx = -Infinity;
+      for (let i = 0; i < n; i++) { if (y[i] < low) low = y[i]; if (x[i] < mnx) mnx = x[i]; if (x[i] > mxx) mxx = x[i]; }
+      if (this.t > P.RAMP1 && low > 0.004) this.air++;
+      const w = mxx - mnx; this.wSum += w; this.wSq += w * w;
+      const a = this.angle(); let da = a - this.lastAng;
+      if (da > Math.PI) da -= TAU; else if (da < -Math.PI) da += TAU;
+      this.rot += da; this.lastAng = a;
+      const cxm = this.comX(); if (cxm > this.maxX) this.maxX = cxm;
+    }
+    gait() {
+      const f = Math.max(1, this.frames), d = this.dist(), T = this.t;
+      const airFrac = this.air / f, turns = Math.abs(this.rot) / TAU;
+      const mw = this.wSum / f, sw = Math.sqrt(Math.max(0, this.wSq / f - mw * mw)) / (mw || 1);
+      const speed = d / Math.max(T, 1e-3);
+      let key;
+      if (d < -0.3) key = 'back';
+      else if (d < 0.35) key = 'wiggle';
+      else if (turns > 1.2) key = 'roll';
+      else if (airFrac > 0.28) key = 'hop';
+      else if (airFrac > 0.1 && speed > 0.35) key = 'run';
+      else if (sw > 0.07) key = 'inch';
+      else key = 'walk';
+      return { key, airFrac, turns, stretch: sw, speed };
+    }
+  }
+
+  // ---------- population ----------
+  class Evolution {
+    constructor(body, seed, size) {
+      this.body = body; this.size = size || 30;
+      this.seed = seed >>> 0; this.rng = rngFrom(this.seed);
+      this.gen = 1; this.history = [];
+      this.pop = [];
+      for (let i = 0; i < this.size; i++) this.pop.push(new Creature(body, randomGenome(this.rng, body.K)));
+    }
+    get time() { return this.pop[0].t; }
+    stepAll() { for (const c of this.pop) c.step(); }
+    done() { return this.pop[0].t >= P.GEN_T - 1e-9; }
+    leader() { let b = this.pop[0], bd = -Infinity; for (const c of this.pop) { const d = c.dist(); if (d > bd) { bd = d; b = c; } } return b; }
+    finishGeneration() {
+      const scored = this.pop.map((c) => ({ c, f: c.dist() })).sort((a, b) => b.f - a.f);
+      const fs = scored.map((s) => s.f);
+      const best = scored[0];
+      const rec = {
+        gen: this.gen, best: fs[0], median: fs[Math.floor(fs.length / 2)], worst: fs[fs.length - 1],
+        genome: cloneGenome(best.c.genome), gait: best.c.gait(),
+      };
+      this.history.push(rec);
+      // breed
+      const rng = this.rng, N = this.size, next = [];
+      const pick = () => { let w = scored[Math.floor(rng() * N)]; for (let i = 0; i < 2; i++) { const o = scored[Math.floor(rng() * N)]; if (o.f > w.f) w = o; } return w.c.genome; };
+      for (let i = 0; i < 4; i++) next.push(cloneGenome(scored[i].c.genome));
+      for (let i = 0; i < 6; i++) next.push(mutate(scored[0].c.genome, rng, 0.45));
+      next.push(randomGenome(rng, this.body.K));
+      while (next.length < N) {
+        const a = pick();
+        next.push(mutate(rng() < 0.7 ? crossover(a, pick(), rng) : a, rng, 1));
+      }
+      for (let i = 0; i < N; i++) { this.pop[i].genome = next[i]; this.pop[i].reset(); }
+      this.gen++;
+      return rec;
+    }
+  }
+
+  return { P, rngFrom, buildBody, Creature, Evolution, randomGenome, cloneGenome };
+})();
+/* ===== ENGINE END ===== */
+/* ===== SAMPLES START ===== */
+// Example doodles in a 100x100 box (y down). Each stroke is a list of [x, y].
+const Samples = (() => {
+  const loop = (cx, cy, rx, ry, n, f) => {
+    const out = [];
+    for (let i = 0; i <= n; i++) {
+      const t = (i / n) * Math.PI * 2, r = f ? f(t) : 1;
+      out.push([cx + rx * r * Math.cos(t), cy + ry * r * Math.sin(t)]);
+    }
+    return out;
+  };
+  const potato = () => [
+    loop(50, 54, 40, 29, 72, (t) => 1 + 0.1 * Math.sin(2 * t + 0.6) + 0.06 * Math.sin(3 * t + 1.9) + 0.03 * Math.sin(5 * t)),
+    loop(37, 47, 3.2, 3.2, 12), loop(60, 45, 3.2, 3.2, 12),
+    Array.from({ length: 13 }, (_, i) => { const t = 0.22 * Math.PI + (i / 12) * 0.56 * Math.PI; return [49 + 12 * Math.cos(t), 52 + 11 * Math.sin(t)]; }),
+  ];
+  const star = () => {
+    const pts = [];
+    for (let i = 0; i <= 10; i++) {
+      const a = -Math.PI / 2 + (i / 10) * Math.PI * 2, r = i % 2 ? 19 : 46;
+      pts.push([50 + r * Math.cos(a), 55 + r * Math.sin(a)]);
+    }
+    return [pts];
+  };
+  const dino = () => [
+    [[4, 62], [18, 55], [32, 47], [44, 42], [55, 40], [61, 33], [63, 21], [70, 13], [84, 12], [93, 17], [94, 24],
+     [82, 27], [75, 28], [73, 36], [72, 45], [74, 53], [71, 60], [73, 64], [73, 77], [66, 77], [64, 66], [53, 68],
+     [55, 73], [55, 87], [46, 87], [44, 72], [38, 67], [27, 65], [4, 62]],
+    loop(82, 18, 1.8, 1.8, 10),
+  ];
+  const octopus = () => {
+    const head = [];
+    for (let i = 0; i <= 40; i++) { const t = Math.PI + (i / 40) * Math.PI; head.push([50 + 30 * Math.cos(t), 44 + 30 * Math.sin(t)]); }
+    for (let i = 0; i <= 12; i++) { const x = 80 - (i / 12) * 60; head.push([x, 46 + 2.2 * Math.sin(i * 1.6)]); }
+    const legs = [22, 40, 58, 76].map((x0, k) => Array.from({ length: 16 }, (_, i) => {
+      const u = i / 15; return [x0 + (k - 1.5) * 6 * u + 5 * Math.sin(u * 6 + k), 47 + u * 42];
+    }));
+    return [head, ...legs, loop(40, 30, 3, 3.6, 10), loop(60, 30, 3, 3.6, 10)];
+  };
+  return { potato, dino, star, octopus };
+})();
+/* ===== SAMPLES END ===== */
+</script>
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const app = $('app'), cv = $('stage'), ctx = cv.getContext('2d');
+  const P = Engine.P, TAU = Math.PI * 2;
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const ease = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+  const fmt = (d) => (Math.abs(d) < 0.005 ? 0 : d).toFixed(2);
+  const HAND = "Gaegu, 'IBM Plex Sans KR', sans-serif";
+  const POP = 30, PEN_W = 7;
+  const GAIT = {
+    back: '뒷걸음질', wiggle: '제자리 꿈틀', roll: '데굴데굴 구르기', hop: '깡총깡총 뛰기',
+    run: '다다다 달리기', inch: '자벌레처럼 기기', walk: '뒤뚱뒤뚱 걷기',
+  };
+  const EX_COLOR = { potato: 0, dino: 3, star: 1, octopus: 4 };
+
+  // ---------- theme ----------
+  let C = {};
+  const lum = (hex) => {
+    const h = hex.replace('#', '').slice(0, 6), n = parseInt(h, 16);
+    return (((n >> 16) & 255) * 0.299 + ((n >> 8) & 255) * 0.587 + (n & 255) * 0.114) / 255;
+  };
+  function readColors() {
+    const cs = getComputedStyle(document.documentElement);
+    const g = (n) => cs.getPropertyValue(n).trim();
+    C = {
+      paper: g('--paper'), grid: g('--grid'), gridMajor: g('--grid-major'), ink: g('--ink'),
+      inkSoft: g('--ink-soft'), inkFaint: g('--ink-faint'), ground: g('--ground'),
+      accent: g('--accent'), muscle: g('--muscle'), line: g('--line'),
+      pens: [0, 1, 2, 3, 4].map((i) => g('--pen' + i)),
+    };
+    C.dark = lum(C.paper) < 0.4;
+    drawSpark();
+  }
+
+  // ---------- state ----------
+  const S = {
+    mode: 'draw', strokes: [], cur: null, pid: null, example: null, exAnim: null, color: 0,
+    body: null, evo: null, speed: 1, userSpeed: false, acc: 0, holdUntil: 0,
+    leader: 0, camX: 0, xray: false, birth: null, cmp: null,
+    announced: new Set(), lastImprove: 1, stallSaid: false, sparkHover: -1,
+  };
+
+  // ---------- layout ----------
+  let W = 0, H = 0, DPR = 1;
+  const L = { top: 0, bot: 0, ground: 0, ppu: 80 };
+  function layout() {
+    const r = app.getBoundingClientRect();
+    W = r.width; H = r.height; DPR = Math.min(2, window.devicePixelRatio || 1);
+    const cw = Math.round(W * DPR), ch = Math.round(H * DPR);
+    if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
+    L.top = $('top').getBoundingClientRect().bottom - r.top;
+    L.bot = $('bottom').getBoundingClientRect().top - r.top;
+    const sh = Math.max(140, L.bot - L.top);
+    L.ground = L.top + sh * 0.72;
+    L.ppu = clamp(Math.min(sh * 0.34, W * 0.245), 56, 170);
+    $('bubble').style.top = (L.top + 12) + 'px';
+    const band = L.bot - L.ground;
+    const ib = $('infoBtn');
+    if (band > 96) { ib.style.top = ''; ib.style.bottom = (H - L.bot + 12) + 'px'; }
+    else { ib.style.bottom = ''; ib.style.top = (L.top + 12) + 'px'; }
+    const lh = (L.bot - L.top) / 2;
+    $('laneA').style.top = (L.top + 10) + 'px';
+    $('laneB').style.top = (L.top + lh + 10) + 'px';
+    drawSpark();
+  }
+  const drawView = () => ({ ax: W * 0.5, ay: L.ground, k: L.ppu });
+  const worldView = (camX) => ({ ax: W * 0.38 - camX * L.ppu, ay: L.ground, k: L.ppu });
+  const lerpView = (a, b, t) => ({ ax: lerp(a.ax, b.ax, t), ay: lerp(a.ay, b.ay, t), k: lerp(a.k, b.k, t) });
+
+  // ---------- paper, ground, rulers ----------
+  function drawPaper(v, top, bottom, markers, flag, note) {
+    const gy = v.ay, step = 0.25 * v.k;
+    ctx.fillStyle = C.paper; ctx.fillRect(0, top, W, bottom - top);
+    ctx.lineWidth = 1;
+    const i0 = Math.floor(-v.ax / step), i1 = Math.ceil((W - v.ax) / step);
+    for (let pass = 0; pass < 2; pass++) {
+      ctx.beginPath();
+      for (let i = i0; i <= i1; i++) {
+        if ((((i % 4) + 4) % 4 === 0) !== (pass === 1)) continue;
+        const sx = Math.round(v.ax + i * step) + 0.5;
+        ctx.moveTo(sx, top); ctx.lineTo(sx, gy);
+      }
+      for (let j = 1; gy - j * step > top; j++) {
+        if ((j % 4 === 0) !== (pass === 1)) continue;
+        const sy = Math.round(gy - j * step) + 0.5;
+        ctx.moveTo(0, sy); ctx.lineTo(W, sy);
+      }
+      ctx.strokeStyle = pass ? C.gridMajor : C.grid; ctx.stroke();
+    }
+    ctx.fillStyle = C.ground; ctx.fillRect(0, gy, W, bottom - gy);
+    ctx.beginPath();
+    for (let sx = -6; sx <= W + 6; sx += 6) {
+      const wx = (sx - v.ax) / v.k;
+      const y = gy + 0.9 * Math.sin(wx * 9.1) + 0.5 * Math.sin(wx * 23.7 + 1.3);
+      if (sx < 0) ctx.moveTo(sx, y); else ctx.lineTo(sx, y);
+    }
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.stroke();
+    if (!markers) return;
+    ctx.font = `700 16px ${HAND}`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    const m0 = Math.ceil(-v.ax / v.k), m1 = Math.floor((W - v.ax) / v.k);
+    ctx.lineWidth = 1.5; ctx.strokeStyle = C.inkSoft; ctx.fillStyle = C.inkSoft;
+    for (let m = m0; m <= m1; m++) {
+      const sx = v.ax + m * v.k;
+      ctx.beginPath(); ctx.moveTo(sx, gy + 4); ctx.lineTo(sx, gy + 11); ctx.stroke();
+      if (bottom - gy > 30) ctx.fillText(m === 0 ? '출발' : m + 'm', sx, gy + 29);
+    }
+    const sx0 = v.ax;
+    if (sx0 > -2 && sx0 < W + 2) {
+      ctx.setLineDash([4, 5]); ctx.strokeStyle = C.inkFaint;
+      ctx.beginPath(); ctx.moveTo(sx0, gy); ctx.lineTo(sx0, Math.max(top, gy - 2.2 * v.k)); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    if (flag && flag.x > 0.25) {
+      const fx = v.ax + flag.x * v.k;
+      if (fx > -80 && fx < W + 80) {
+        const fy = Math.max(top + 30, gy - 1.9 * v.k);
+        ctx.setLineDash([5, 4]); ctx.strokeStyle = C.accent; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(fx, gy); ctx.lineTo(fx, fy); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = C.accent;
+        ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx + 14, fy + 5); ctx.lineTo(fx, fy + 10); ctx.closePath(); ctx.fill();
+        ctx.font = `700 16px ${HAND}`; ctx.textAlign = 'left';
+        ctx.fillText(flag.label, fx + 18, fy + 10);
+      }
+    }
+    const ny = Math.min(bottom, L.bot) - 12;
+    if (note && ny - gy > 48) {
+      ctx.font = `12px 'IBM Plex Sans KR', sans-serif`; ctx.textAlign = 'left'; ctx.fillStyle = C.inkFaint;
+      ctx.fillText('모눈 한 칸 = 25cm', 16, ny);
+    }
+  }
+
+  // ---------- creature drawing ----------
+  const OX = new Float64Array(1024), OY = new Float64Array(1024);
+  function silhouette(cr, v, grow) { ctx.beginPath(); addSilhouette(cr, v, grow); }
+  function addSilhouette(cr, v, grow) {
+    const b = cr.body, x = cr.x, y = cr.y, off = b.s * 0.45 * grow;
+    for (const loop of b.loops) {
+      const n = loop.length;
+      if (n < 3 || n > 1024) continue;
+      for (let q = 0; q < n; q++) {
+        const i0 = loop[(q + n - 1) % n], i1 = loop[q], i2 = loop[(q + 1) % n];
+        const ax = x[i1] - x[i0], ay = y[i1] - y[i0], bx = x[i2] - x[i1], by = y[i2] - y[i1];
+        const la = Math.hypot(ax, ay) || 1, lb = Math.hypot(bx, by) || 1;
+        const nx = ay / la + by / lb, ny = -ax / la - bx / lb, ln = Math.hypot(nx, ny) || 1;
+        OX[q] = v.ax + (x[i1] + (nx / ln) * off) * v.k;
+        OY[q] = v.ay - (y[i1] + (ny / ln) * off) * v.k;
+      }
+      ctx.moveTo((OX[n - 1] + OX[0]) / 2, (OY[n - 1] + OY[0]) / 2);
+      for (let q = 0; q < n; q++) {
+        const q2 = (q + 1) % n;
+        ctx.quadraticCurveTo(OX[q], OY[q], (OX[q] + OX[q2]) / 2, (OY[q] + OY[q2]) / 2);
+      }
+      ctx.closePath();
+    }
+  }
+  function triPath(cr, v, filter) {
+    const b = cr.body, x = cr.x, y = cr.y, T = b.tris;
+    ctx.beginPath();
+    for (let t = 0; t < b.nt; t++) {
+      if (filter >= 0 && b.triG[t] !== filter) continue;
+      const a = T[3 * t], bb = T[3 * t + 1], c = T[3 * t + 2];
+      ctx.moveTo(v.ax + x[a] * v.k, v.ay - y[a] * v.k);
+      ctx.lineTo(v.ax + x[bb] * v.k, v.ay - y[bb] * v.k);
+      ctx.lineTo(v.ax + x[c] * v.k, v.ay - y[c] * v.k);
+      ctx.closePath();
+    }
+  }
+  function groupColor(g, K) {
+    const h = (g * 360 / K + 205) % 360;
+    return `hsl(${h.toFixed(0)} ${C.dark ? 75 : 65}% ${C.dark ? 66 : 47}%)`;
+  }
+  function drawMuscles(cr, v, strength) {
+    if (strength <= 0) return;
+    ctx.fillStyle = C.muscle;
+    for (let g = 0; g < cr.body.K; g++) {
+      const al = clamp((1 - cr.act[g]) * 2.4, 0, 0.5) * strength;
+      if (al < 0.02) continue;
+      ctx.globalAlpha = al; triPath(cr, v, g); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawSkeleton(cr, v, alpha, nodeScale) {
+    const b = cr.body, x = cr.x, y = cr.y;
+    ctx.lineCap = 'round';
+    for (let g = 0; g < b.K; g++) {
+      const strain = 1 - cr.act[g];
+      ctx.strokeStyle = groupColor(g, b.K);
+      ctx.globalAlpha = alpha * 0.85;
+      ctx.lineWidth = 1.2 + Math.max(0, strain) * 6;
+      ctx.beginPath();
+      for (let e = 0; e < b.m; e++) {
+        if (b.sg[e] !== g || b.kind[e] !== 0) continue;
+        const i = b.sa[e], j = b.sb[e];
+        ctx.moveTo(v.ax + x[i] * v.k, v.ay - y[i] * v.k); ctx.lineTo(v.ax + x[j] * v.k, v.ay - y[j] * v.k);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = alpha * 0.35; ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      for (let e = 0; e < b.m; e++) {
+        if (b.sg[e] !== g || b.kind[e] === 0) continue;
+        const i = b.sa[e], j = b.sb[e];
+        ctx.moveTo(v.ax + x[i] * v.k, v.ay - y[i] * v.k); ctx.lineTo(v.ax + x[j] * v.k, v.ay - y[j] * v.k);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = alpha; ctx.fillStyle = C.ink;
+    for (let i = 0; i < b.n; i++) {
+      const r = 2.3 * (nodeScale ? nodeScale(i) : 1);
+      if (r <= 0.05) continue;
+      ctx.beginPath(); ctx.arc(v.ax + x[i] * v.k, v.ay - y[i] * v.k, r, 0, TAU); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawStrokes(cr, v) {
+    const b = cr.body, x = cr.x, y = cr.y, T = b.tris;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const st of b.strokes) {
+      const B = st.bind;
+      ctx.strokeStyle = C.pens[st.c] || C.ink;
+      ctx.lineWidth = Math.max(1.4, st.w * v.k);
+      ctx.beginPath();
+      for (let i = 0; i < st.count; i++) {
+        const t = B[4 * i] * 3, a = T[t], bb = T[t + 1], c = T[t + 2];
+        const l1 = B[4 * i + 1], l2 = B[4 * i + 2], l3 = B[4 * i + 3];
+        const px = v.ax + (l1 * x[a] + l2 * x[bb] + l3 * x[c]) * v.k;
+        const py = v.ay - (l1 * y[a] + l2 * y[bb] + l3 * y[c]) * v.k;
+        if (i === 0) { ctx.moveTo(px, py); if (st.count === 1) ctx.lineTo(px + 0.01, py); } else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+  }
+  // the rest of the pack, painted as one union so overlapping copies stay light
+  function drawGhosts(list, viewOf, alpha) {
+    ctx.beginPath();
+    for (let i = 0; i < list.length; i++) addSilhouette(list[i], viewOf(i), 1);
+    ctx.globalAlpha = (C.dark ? 0.14 : 0.1) * alpha; ctx.fillStyle = C.inkSoft; ctx.fill();
+    ctx.globalAlpha = 0.35 * alpha; ctx.strokeStyle = C.inkFaint; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  function drawFull(cr, v, o) {
+    const col = C.pens[cr.body.mainColor] || C.ink, jelly = o.jelly == null ? 1 : o.jelly;
+    if (jelly > 0) {
+      silhouette(cr, v, 1);
+      ctx.globalAlpha = (C.dark ? 0.24 : 0.15) * jelly; ctx.fillStyle = col; ctx.fill();
+      ctx.globalAlpha = 0.6 * jelly; ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    drawMuscles(cr, v, o.muscle == null ? 1 : o.muscle);
+    if (o.xray) drawSkeleton(cr, v, 1);
+    drawStrokes(cr, v);
+  }
+  function topOf(cr) { let t = -Infinity; for (let i = 0; i < cr.body.n; i++) if (cr.y[i] > t) t = cr.y[i]; return t; }
+
+  // ---------- drawing mode ----------
+  function rawStroke(st, upto) {
+    const pts = st.pts, n = upto == null ? pts.length : Math.min(upto, pts.length);
+    if (!n) return;
+    ctx.strokeStyle = C.pens[st.c] || C.ink; ctx.lineWidth = st.w;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+    if (n === 1) ctx.lineTo(pts[0].x + 0.01, pts[0].y);
+    else {
+      for (let i = 1; i < n - 1; i++) ctx.quadraticCurveTo(pts[i].x, pts[i].y, (pts[i].x + pts[i + 1].x) / 2, (pts[i].y + pts[i + 1].y) / 2);
+      ctx.lineTo(pts[n - 1].x, pts[n - 1].y);
+    }
+    ctx.stroke();
+  }
+  function renderDraw(now) {
+    const v = drawView();
+    drawPaper(v, 0, H, false, null);
+    ctx.font = `700 18px ${HAND}`; ctx.fillStyle = C.inkSoft; ctx.textAlign = 'left';
+    ctx.fillText('땅', 16, L.ground + 26);
+    if (S.exAnim) {
+      const A = S.exAnim, p = clamp((now - A.start) / A.dur, 0, 1);
+      let left = Math.floor(p * A.total);
+      for (const st of A.strokes) { if (left <= 0) break; rawStroke(st, left); left -= st.pts.length; }
+      if (p >= 1) { S.strokes = A.strokes; S.exAnim = null; syncDraw(); }
+      return;
+    }
+    for (const st of S.strokes) rawStroke(st);
+    if (S.cur) rawStroke(S.cur);
+    const midY = L.top + (L.ground - L.top) * 0.45;
+    ctx.textAlign = 'center';
+    if (!S.strokes.length && !S.cur) {
+      ctx.fillStyle = C.inkFaint;
+      ctx.font = `700 30px ${HAND}`; ctx.fillText('여기에 아무거나 그려봐', W / 2, midY);
+      ctx.font = `700 19px ${HAND}`; ctx.fillText('감자, 공룡, 삐뚤빼뚤한 동그라미 뭐든 좋아', W / 2, midY + 30);
+    } else if (S.example && !S.cur) {
+      let top = Infinity;
+      for (const st of S.strokes) for (const p of st.pts) top = Math.min(top, p.y);
+      ctx.fillStyle = C.inkFaint; ctx.font = `700 18px ${HAND}`;
+      ctx.fillText('예시 그림이야. 그리기 시작하면 지워져.', W / 2, Math.max(L.top + 26, top - 16));
+    }
+  }
+  function syncDraw() {
+    const has = S.strokes.length > 0, busy = !!S.exAnim;
+    $('goBtn').disabled = !has || busy;
+    $('undoBtn').disabled = !has || busy;
+    $('clearBtn').disabled = !has || busy;
+  }
+  function pointOf(e) {
+    const r = cv.getBoundingClientRect();
+    return { x: clamp(e.clientX - r.left, 2, W - 2), y: clamp(e.clientY - r.top, L.top + 2, L.bot - 2) };
+  }
+  cv.addEventListener('pointerdown', (e) => {
+    if (S.mode !== 'draw' || S.exAnim || e.button > 0 || S.cur) return;
+    if (S.example) { S.strokes = []; S.example = null; }
+    try { cv.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+    S.pid = e.pointerId;
+    S.cur = { c: S.color, w: PEN_W, pts: [pointOf(e)] };
+    e.preventDefault();
+  });
+  cv.addEventListener('pointermove', (e) => {
+    if (!S.cur || e.pointerId !== S.pid) return;
+    const list = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const ev of (list.length ? list : [e])) {
+      const p = pointOf(ev), q = S.cur.pts[S.cur.pts.length - 1];
+      if (Math.hypot(p.x - q.x, p.y - q.y) > 1.5) S.cur.pts.push(p);
+    }
+  });
+  const endStroke = (e) => {
+    if (!S.cur || e.pointerId !== S.pid) return;
+    S.strokes.push(S.cur); S.cur = null; S.pid = null; syncDraw();
+  };
+  cv.addEventListener('pointerup', endStroke);
+  cv.addEventListener('pointercancel', endStroke);
+
+  function exampleStrokes(name) {
+    const raw = Samples[name]();
+    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+    for (const s of raw) for (const [x, y] of s) { a = Math.min(a, x); b = Math.min(b, y); c = Math.max(c, x); d = Math.max(d, y); }
+    const size = Math.min(W * 0.62, (L.ground - L.top) * 0.66, 340);
+    const sc = size / Math.max(c - a, d - b);
+    const ox = W / 2 - ((a + c) / 2) * sc, oy = L.ground - 14 - d * sc;
+    return raw.map((pts) => ({ c: EX_COLOR[name], w: PEN_W, pts: pts.map(([x, y]) => ({ x: ox + x * sc, y: oy + y * sc })) }));
+  }
+  function playExample(name, animate) {
+    const strokes = exampleStrokes(name);
+    S.example = name; S.cur = null;
+    if (!animate) { S.strokes = strokes; S.exAnim = null; syncDraw(); return; }
+    S.strokes = [];
+    S.exAnim = { strokes, start: performance.now(), dur: 1000, total: strokes.reduce((t, s) => t + s.pts.length, 0) };
+    syncDraw();
+  }
+
+  // ---------- modes ----------
+  function setMode(m) {
+    S.mode = m;
+    app.dataset.mode = m === 'birth' ? 'evolve' : m;
+    $('bottom').inert = m === 'birth';
+    $('infoBtn').inert = m === 'birth';
+    layout();
+  }
+  let bubbleTimer = 0;
+  function say(text, ms) {
+    const el = $('bubble');
+    el.textContent = text; el.classList.add('show');
+    clearTimeout(bubbleTimer);
+    bubbleTimer = setTimeout(() => el.classList.remove('show'), ms || 4600);
+  }
+  function hush() { clearTimeout(bubbleTimer); $('bubble').classList.remove('show'); }
+
+  function newEvolution() {
+    S.evo = new Engine.Evolution(S.body, (Math.random() * 4294967296) >>> 0, POP);
+    S.acc = 0; S.holdUntil = 0; S.leader = 0; S.camX = 0;
+    S.announced = new Set(); S.lastImprove = 1; S.stallSaid = false; S.sparkHover = -1;
+    if (!S.userSpeed) setSpeed(1, false);
+    $('compareBtn').disabled = true;
+    hud.gen = hud.best = hud.gait = null;
+    updateHUD(); drawSpark();
+  }
+  function comeAlive() {
+    if (!S.strokes.length || S.exAnim) return;
+    const body = Engine.buildBody(S.strokes);
+    if (body.error) { say(body.error === 'small' ? '조금만 더 크게 그려줘!' : '먼저 뭔가 그려줘!', 2600); return; }
+    S.body = body;
+    const from = drawView(), m = body.map;
+    const drawMap = { ax: m.minx + m.comx / m.sc, ay: m.maxy - (m.lowy - 0.04) / m.sc, k: 1 / m.sc };
+    newEvolution();
+    // nodes pop in from the middle outwards
+    const order = Array.from({ length: body.n }, (_, i) => i)
+      .sort((i, j) => Math.hypot(body.rx[i], body.ry[i] - 0.4) - Math.hypot(body.rx[j], body.ry[j] - 0.4));
+    const rank = new Float64Array(body.n); order.forEach((i, r) => { rank[i] = r / body.n; });
+    S.birth = { start: performance.now(), from, drawMap, rank, said: 0 };
+    setMode('birth');
+    say(`말랑한 젤리 몸 완성! 점 ${body.n}개를 스프링 ${body.m}개로 엮었어.`, 1500);
+  }
+  function renderBirth(now) {
+    const B = S.birth, p = (now - B.start) / 1000, body = S.body, cr = S.evo.pop[0];
+    if (p > 0.95 && B.said < 1) { B.said = 1; say(`몸속에 근육 ${body.K}덩어리가 생겼어.`, 1500); }
+    if (p > 1.75 && B.said < 2) { B.said = 2; say(`똑같은 몸 ${POP}개로 복제! 근육 박자만 제각각이야.`, 2200); }
+    const e3 = ease((p - 1.75) / 1.15);
+    const wv = worldView(0);
+    const gv = lerpView(B.from, wv, e3);
+    drawPaper(gv, 0, H, e3 > 0.6, null);
+    const cvw = lerpView(B.drawMap, wv, e3);
+    // phase 1: jelly fills in and the skeleton pops; phase 2: muscle groups light up; phase 3: move + clone
+    const fan = Math.sin(Math.PI * e3);
+    if (e3 > 0) {
+      drawGhosts(S.evo.pop.slice(1), (i) => ({ ax: cvw.ax + (i + 1 - POP / 2) * 0.1 * fan * cvw.k, ay: cvw.ay, k: cvw.k }), Math.min(1, e3 * 3));
+    }
+    const jelly = ease((p - 0.35) / 0.7);
+    drawFull(cr, cvw, { jelly, muscle: 0 });
+    const mg = ease((p - 0.9) / 0.35) * (1 - ease((p - 1.75) / 0.6));
+    if (mg > 0) {
+      for (let g = 0; g < body.K; g++) {
+        ctx.globalAlpha = mg * (0.28 + 0.14 * Math.sin(p * 9 + g * 1.7));
+        ctx.fillStyle = groupColor(g, body.K); triPath(cr, cvw, g); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      drawStrokes(cr, cvw);
+    }
+    const sk = 1 - ease((p - 1.6) / 0.5);
+    if (sk > 0) {
+      drawSkeleton(cr, cvw, sk, (i) => {
+        const t = clamp((p - 0.05 - B.rank[i] * 0.6) / 0.25, 0, 1);
+        return t <= 0 ? 0 : 1 + 0.7 * Math.sin(Math.PI * t) * (1 - t) * 2;
+      });
+    }
+    if (p >= 3.0) {
+      S.birth = null; setMode('evolve');
+      say(`1세대 ${POP}마리 출발! 아직 아무도 걷는 법을 몰라.`, 4200);
+    }
+  }
+
+  // ---------- evolution ----------
+  function setSpeed(v, byUser) {
+    S.speed = v; if (byUser) S.userSpeed = true;
+    for (const b of document.querySelectorAll('.seg button')) b.setAttribute('aria-pressed', String(+b.dataset.speed === v));
+  }
+  function endGeneration() {
+    const evo = S.evo, rec = evo.finishGeneration(), h = evo.history;
+    S.leader = 0; S.camX = 0;
+    const prev = h.length > 1 ? h[h.length - 2].best : -Infinity;
+    if (rec.best > prev + 0.01) { S.lastImprove = rec.gen; S.stallSaid = false; }
+    const key = rec.gait.key, fresh = !S.announced.has(key) && key !== 'wiggle' && key !== 'back';
+    if (rec.gen === 1) {
+      let msg = `1세대 최고 기록 ${fmt(rec.best)}m. 이제 멀리 간 녀석들만 새끼를 낳아. 새끼는 부모를 닮았지만 조금씩 달라.`;
+      if (!S.userSpeed) { setSpeed(4, false); msg += ' 지금부터 4배속으로 감을게.'; }
+      say(msg, 6500);
+    } else if (fresh) {
+      S.announced.add(key);
+      say(`${rec.gen}세대에서 새 걸음을 찾았어: ${GAIT[key]}!`, 4200);
+    } else if (rec.best > prev + Math.max(0.2, prev * 0.12)) {
+      say(`${rec.gen}세대 새 기록! ${fmt(rec.best)}m`, 3400);
+    } else if (rec.gen % 10 === 0) {
+      say(`${rec.gen}세대까지 왔어. 1세대랑 나란히 달려보게 할까?`, 4500);
+      const cb = $('compareBtn'); cb.classList.remove('nudge'); void cb.offsetWidth; cb.classList.add('nudge');
+    } else if (rec.gen - S.lastImprove >= 8 && !S.stallSaid) {
+      S.stallSaid = true;
+      say('한동안 기록이 제자리야. 진화는 이렇게 헤매다가 갑자기 확 좋아지기도 해.', 5000);
+    }
+    if (key !== 'wiggle' && key !== 'back') S.announced.add(key);
+    $('compareBtn').disabled = h.length < 2;
+    drawSpark();
+  }
+  function updateEvolve(dt, now) {
+    const evo = S.evo;
+    if (S.holdUntil) {
+      if (now < S.holdUntil) return;
+      S.holdUntil = 0; endGeneration(); return;
+    }
+    const t0 = performance.now();
+    let n;
+    if (S.speed >= 99) n = 400;
+    else { S.acc += dt * S.speed * 60; n = Math.floor(S.acc); S.acc -= n; }
+    for (let i = 0; i < n; i++) {
+      if (evo.done()) {
+        if (S.speed === 1) { S.holdUntil = now + 900; break; }
+        endGeneration(); continue;
+      }
+      evo.stepAll();
+      if (performance.now() - t0 > 11) { S.acc = 0; break; }
+    }
+    let bi = S.leader, bd = evo.pop[bi].dist();
+    for (let i = 0; i < evo.pop.length; i++) { const d = evo.pop[i].dist(); if (d > bd + 0.08) { bd = d; bi = i; } }
+    S.leader = bi;
+    const target = evo.pop[bi].comX(), rate = 5 * Math.min(S.speed, 8);
+    S.camX += (target - S.camX) * (1 - Math.exp(-dt * rate));
+  }
+  function renderEvolve() {
+    const evo = S.evo, v = worldView(S.camX), h = evo.history;
+    const best = h.length ? h[h.length - 1].best : 0;
+    drawPaper(v, 0, H, true, { x: best, label: `최고 ${fmt(best)}m` }, true);
+    const lead = evo.pop[S.leader];
+    drawGhosts(evo.pop.filter((c) => c !== lead), () => v, 1);
+    drawFull(lead, v, { xray: S.xray });
+    const tx = v.ax + lead.comX() * v.k, ty = v.ay - topOf(lead) * v.k - 12;
+    ctx.font = `700 17px ${HAND}`; ctx.textAlign = 'center'; ctx.fillStyle = C.ink;
+    ctx.fillText('1등', tx, Math.max(L.top + 18, ty));
+  }
+
+  // ---------- HUD + sparkline ----------
+  const hud = { gen: null, best: null, gait: null, clock: null };
+  function setText(id, key, val) { if (hud[key] !== val) { hud[key] = val; $(id).textContent = val; } }
+  function updateHUD() {
+    const evo = S.evo; if (!evo) return;
+    const t = Math.min(evo.time, P.GEN_T);
+    setText('genNum', 'gen', String(evo.gen));
+    setText('raceClock', 'clock', `${t.toFixed(1)}초 / ${P.GEN_T}초`);
+    $('raceBar').style.transform = `scaleX(${(t / P.GEN_T).toFixed(3)})`;
+    const h = evo.history;
+    setText('bestNum', 'best', h.length ? fmt(h[h.length - 1].best) : '–');
+    setText('gaitText', 'gait', h.length ? `걸음: ${GAIT[h[h.length - 1].gait.key]}` : '걸음: 아직 몰라');
+  }
+  function drawSpark() {
+    const c = $('spark'); if (!c || !C.paper) return;
+    const w = 132, h = 40, d = Math.min(2, window.devicePixelRatio || 1);
+    if (c.width !== w * d) { c.width = w * d; c.height = h * d; }
+    const g = c.getContext('2d');
+    g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, w, h);
+    const hist = S.evo ? S.evo.history : [];
+    let lo = 0, hi = 0.5;
+    for (const r of hist) { hi = Math.max(hi, r.best); lo = Math.min(lo, r.median); }
+    hi *= 1.08;
+    const n = hist.length, X = (i) => (n <= 1 ? w - 5 : 4 + (i / (n - 1)) * (w - 9)), Y = (v) => h - 3 - ((v - lo) / (hi - lo)) * (h - 9);
+    g.strokeStyle = C.line; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(0, Math.round(Y(0)) + 0.5); g.lineTo(w, Math.round(Y(0)) + 0.5); g.stroke();
+    if (!n) return;
+    if (n > 1) {
+      g.beginPath(); g.moveTo(X(0), Y(0));
+      hist.forEach((r, i) => g.lineTo(X(i), Y(r.best)));
+      g.lineTo(X(n - 1), Y(0)); g.closePath();
+      g.globalAlpha = 0.14; g.fillStyle = C.accent; g.fill(); g.globalAlpha = 1;
+      g.setLineDash([3, 3]); g.strokeStyle = C.inkFaint; g.lineWidth = 1.5;
+      g.beginPath(); hist.forEach((r, i) => (i ? g.lineTo(X(i), Y(r.median)) : g.moveTo(X(i), Y(r.median)))); g.stroke();
+      g.setLineDash([]);
+      g.strokeStyle = C.accent; g.lineWidth = 2; g.lineJoin = 'round';
+      g.beginPath(); hist.forEach((r, i) => (i ? g.lineTo(X(i), Y(r.best)) : g.moveTo(X(i), Y(r.best)))); g.stroke();
+    }
+    const hv = S.sparkHover >= 0 && S.sparkHover < n ? S.sparkHover : -1;
+    if (hv >= 0) {
+      g.strokeStyle = C.inkSoft; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(Math.round(X(hv)) + 0.5, 0); g.lineTo(Math.round(X(hv)) + 0.5, h); g.stroke();
+    }
+    const e = hv >= 0 ? hv : n - 1;
+    g.fillStyle = C.paper; g.beginPath(); g.arc(X(e), Y(hist[e].best), 4.5, 0, TAU); g.fill();
+    g.fillStyle = C.accent; g.beginPath(); g.arc(X(e), Y(hist[e].best), 3, 0, TAU); g.fill();
+  }
+  function sparkPointer(e) {
+    const hist = S.evo ? S.evo.history : [];
+    if (!hist.length) return;
+    const r = $('spark').getBoundingClientRect(), n = hist.length;
+    const i = n <= 1 ? 0 : clamp(Math.round(((e.clientX - r.left - 4) / (r.width - 9)) * (n - 1)), 0, n - 1);
+    S.sparkHover = i;
+    const rec = hist[i], tip = $('sparkTip');
+    tip.textContent = `${rec.gen}세대 · 최고 ${fmt(rec.best)}m · 중간 ${fmt(rec.median)}m`;
+    tip.hidden = false; drawSpark();
+  }
+  $('spark').addEventListener('pointermove', sparkPointer);
+  $('spark').addEventListener('pointerdown', sparkPointer);
+  $('spark').addEventListener('pointerleave', () => { S.sparkHover = -1; $('sparkTip').hidden = true; drawSpark(); });
+
+  // ---------- 1st generation vs now ----------
+  function enterCompare() {
+    const h = S.evo.history; if (h.length < 2) return;
+    const last = h[h.length - 1];
+    S.cmp = {
+      a: new Engine.Creature(S.body, h[0].genome), b: new Engine.Creature(S.body, last.genome),
+      bestA: h[0].best, bestB: last.best, acc: 0, hold: 0, camA: 0, camB: 0,
+    };
+    $('cmpTitle').textContent = `1세대 vs ${last.gen}세대`;
+    $('laneBn').textContent = `${last.gen}세대 챔피언`;
+    hush(); setMode('compare');
+  }
+  function exitCompare() { S.cmp = null; setMode('evolve'); }
+  function updateCompare(dt, now) {
+    const c = S.cmp;
+    if (c.hold) {
+      if (now >= c.hold) { c.hold = 0; c.a.reset(); c.b.reset(); c.camA = c.camB = 0; }
+    } else {
+      c.acc += dt * 60; let n = Math.floor(c.acc); c.acc -= n; n = Math.min(n, 4);
+      for (let i = 0; i < n; i++) {
+        if (c.a.t >= P.GEN_T - 1e-9) { c.hold = now + 1500; break; }
+        c.a.step(); c.b.step();
+      }
+    }
+    const k = 1 - Math.exp(-dt * 5);
+    c.camA += (c.a.comX() - c.camA) * k; c.camB += (c.b.comX() - c.camB) * k;
+    $('laneAd').textContent = `${fmt(c.a.dist())}m`;
+    $('laneBd').textContent = `${fmt(c.b.dist())}m`;
+  }
+  function renderCompare() {
+    const c = S.cmp, lh = (L.bot - L.top) / 2;
+    ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+    [[c.a, c.camA, c.bestA], [c.b, c.camB, c.bestB]].forEach(([cr, cam, best], i) => {
+      const top = L.top + i * lh, bottom = top + lh;
+      const k = clamp(Math.min(lh * 0.4, W * 0.2), 36, 150);
+      const v = { ax: W * 0.4 - cam * k, ay: top + lh * 0.74, k };
+      ctx.save(); ctx.beginPath(); ctx.rect(0, top, W, lh); ctx.clip();
+      drawPaper(v, top, bottom, true, { x: best, label: `기록 ${fmt(best)}m` }, i === 1);
+      drawFull(cr, v, { xray: S.xray });
+      ctx.restore();
+    });
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(0, Math.round(L.top + lh) + 0.5); ctx.lineTo(W, Math.round(L.top + lh) + 0.5); ctx.stroke();
+  }
+
+  // ---------- main loop ----------
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000)); last = now;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    if (S.mode === 'draw') renderDraw(now);
+    else if (S.mode === 'birth') renderBirth(now);
+    else if (S.mode === 'evolve') { updateEvolve(dt, now); renderEvolve(); updateHUD(); }
+    else if (S.mode === 'compare') { updateCompare(dt, now); renderCompare(); }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- controls ----------
+  for (const b of document.querySelectorAll('.sw')) b.addEventListener('click', () => {
+    S.color = +b.dataset.c;
+    for (const o of document.querySelectorAll('.sw')) o.setAttribute('aria-checked', String(o === b));
+  });
+  for (const b of document.querySelectorAll('.ex')) b.addEventListener('click', () => playExample(b.dataset.ex, true));
+  $('undoBtn').addEventListener('click', () => { S.strokes.pop(); if (!S.strokes.length) S.example = null; syncDraw(); });
+  $('clearBtn').addEventListener('click', () => { S.strokes = []; S.example = null; syncDraw(); });
+  $('goBtn').addEventListener('click', comeAlive);
+  for (const b of document.querySelectorAll('.seg button')) b.addEventListener('click', () => setSpeed(+b.dataset.speed, true));
+  const toggleXray = () => {
+    S.xray = !S.xray;
+    $('xrayBtn').setAttribute('aria-pressed', String(S.xray));
+    $('cmpXray').setAttribute('aria-pressed', String(S.xray));
+  };
+  $('xrayBtn').addEventListener('click', toggleXray);
+  $('cmpXray').addEventListener('click', toggleXray);
+  $('compareBtn').addEventListener('click', enterCompare);
+  $('cmpClose').addEventListener('click', exitCompare);
+  $('redrawBtn').addEventListener('click', () => { hush(); S.evo = null; S.body = null; setMode('draw'); syncDraw(); });
+  $('restartBtn').addEventListener('click', () => { newEvolution(); say('같은 몸으로 처음부터 다시! 이번엔 어떤 걸음을 찾을까?', 3500); });
+  const openInfo = () => {
+    const b = S.body;
+    if (b) { $('iN').textContent = b.n; $('iM').textContent = b.m; $('iK').textContent = b.K; $('iG').textContent = 2 * b.K + 1; }
+    $('info').hidden = false; $('infoClose').focus();
+  };
+  const closeInfo = () => { $('info').hidden = true; $('infoBtn').focus(); };
+  $('infoBtn').addEventListener('click', openInfo);
+  $('infoClose').addEventListener('click', closeInfo);
+  $('info').addEventListener('click', (e) => { if (e.target === $('info')) closeInfo(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!$('info').hidden) closeInfo(); else if (S.mode === 'compare') exitCompare();
+  });
+
+  window.addEventListener('resize', layout);
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', readColors);
+  new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'style'] });
+
+  // ---------- boot ----------
+  const hot = window.claude && window.claude.hot;
+  if (hot && hot.snapshot) hot.snapshot(() => ({ strokes: S.strokes, example: S.example }));
+  function boot(data) {
+    readColors(); layout();
+    if (data && Array.isArray(data.strokes) && data.strokes.length) { S.strokes = data.strokes; S.example = data.example || null; syncDraw(); }
+    else playExample('potato', false);
+    requestAnimationFrame((t) => { last = t; frame(t); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+  }
+  if (hot && hot.ready) hot.ready(boot); else boot((hot && hot.data) || {});
+})();
+</script>
+</body>
+</html>
