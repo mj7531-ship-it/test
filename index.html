@@ -195,8 +195,17 @@ button { font: inherit; color: inherit; }
 .lane-label .ln-tag:empty { display: none; }
 
 /* evolve footer buttons: one row of four, two by two on phones */
-.row.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-@media (max-width: 520px) { .row.grid4 { grid-template-columns: 1fr 1fr; } }
+.row.grid6 { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.row.grid6 .tool { padding-inline: 6px; }
+@media (max-width: 640px) { .row.grid6 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.card-img {
+  display: block; width: 100%; max-width: 420px; height: auto; aspect-ratio: 4 / 5; margin: 6px auto 14px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--ground);
+  -webkit-touch-callout: default; user-select: auto; -webkit-user-select: auto;
+}
+.card-actions { display: flex; gap: 8px; max-width: 420px; margin-inline: auto; }
+.card-actions .tool { flex: 1; }
+.card-note { max-width: 420px; margin: 10px auto 0; color: var(--ink-soft); font-size: 13px; text-align: center; text-wrap: balance; }
 .badge {
   display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px;
   box-sizing: border-box; border-radius: 9px; background: var(--muscle); color: var(--paper);
@@ -315,7 +324,6 @@ summary { cursor: pointer; font-weight: 600; }
       <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
       <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.6A8.2 8.2 0 1 1 9.4 4a6.6 6.6 0 0 0 10.6 10.6z"/></svg>
     </button>
-    <button id="infoBtn" class="tool evo-only" type="button">어떻게 배워?</button>
   </div>
   <div id="lane0" class="lane-label cmp-only"><span class="ln-name"></span><span class="num ln-dist"></span><span class="ln-tag"></span></div>
   <div id="lane1" class="lane-label cmp-only"><span class="ln-name"></span><span class="num ln-dist"></span><span class="ln-tag"></span></div>
@@ -359,9 +367,11 @@ summary { cursor: pointer; font-weight: 600; }
           <div class="grow"></div>
           <button id="xrayBtn" class="tool" type="button" aria-pressed="false">속 보기</button>
         </div>
-        <div class="row grid4">
+        <div class="row grid6">
           <button id="compareBtn" class="tool strong" type="button" disabled>세대 비교</button>
           <button id="boardBtn" class="tool" type="button">기록판<span id="boardBadge" class="badge" hidden></span></button>
+          <button id="cardBtn" class="tool" type="button" disabled>챔피언 저장</button>
+          <button id="infoBtn" class="tool" type="button">어떻게 배워?</button>
           <button id="redrawBtn" class="tool" type="button">다시 그리기</button>
           <button id="restartBtn" class="tool" type="button">새로 진화</button>
         </div>
@@ -394,6 +404,18 @@ summary { cursor: pointer; font-weight: 600; }
       <p class="board-stats" id="boardStats"></p>
       <p class="lede" style="margin-top:0">기록판을 보는 동안에는 경주가 잠깐 멈춰. 진화 기록과 기록판은 이 브라우저에 저장돼서, 다시 열면 이어서 볼 수 있어.</p>
       <ol class="board" id="boardList"></ol>
+    </div>
+  </div>
+
+  <div id="card" class="sheet" hidden>
+    <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="cardTitle">
+      <div class="sheet-head">
+        <h2 id="cardTitle">챔피언 카드</h2>
+        <button id="cardClose" class="tool" type="button">닫기</button>
+      </div>
+      <img id="cardImg" class="card-img" alt="" width="1080" height="1350">
+      <div class="card-actions"><button id="cardSave" class="tool strong" type="button" disabled>이미지 저장</button></div>
+      <p class="card-note" id="cardNote" role="status"></p>
     </div>
   </div>
 
@@ -1058,13 +1080,15 @@ const Samples = (() => {
 (() => {
   'use strict';
   const $ = (id) => document.getElementById(id);
-  const app = $('app'), cv = $('stage'), ctx = cv.getContext('2d');
+  const app = $('app'), cv = $('stage');
+  let ctx = cv.getContext('2d'); // swapped briefly to draw the champion card with the same painters
   const P = Engine.P, TAU = Math.PI * 2;
   const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
   const lerp = (a, b, t) => a + (b - a) * t;
   const ease = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
   const fmt = (d) => (Math.abs(d) < 0.005 ? 0 : d).toFixed(2);
   const HAND = "Gaegu, 'IBM Plex Sans KR', sans-serif";
+  const UI_FONT = "'IBM Plex Sans KR', sans-serif", NUM_FONT = "'IBM Plex Mono', monospace";
   const POP = 30, PEN_W = 7;
   const GAIT = {
     back: '뒷걸음질', wiggle: '제자리 꿈틀', roll: '데굴데굴 구르기', hop: '깡총깡총 뛰기',
@@ -1473,6 +1497,7 @@ const Samples = (() => {
     S.board = []; S.unread = 0; syncBadge();
     if (!S.userSpeed) setSpeed(1, false);
     $('compareBtn').disabled = true;
+    $('cardBtn').disabled = true;
     hud.gen = hud.best = hud.gait = null;
     S.pendingSave = null;
     updateHUD(); drawSpark();
@@ -1577,6 +1602,7 @@ const Samples = (() => {
     }
     if (key !== 'wiggle' && key !== 'back') S.announced.add(key);
     $('compareBtn').disabled = h.length < 2;
+    $('cardBtn').disabled = false;
     drawSpark();
     queueSave();
   }
@@ -1734,6 +1760,7 @@ const Samples = (() => {
     S.userSpeed = !!d.userSpeed; setSpeed([1, 4, 99].includes(d.speed) ? d.speed : 1, false);
     hud.gen = hud.best = hud.gait = hud.clock = null;
     $('compareBtn').disabled = evo.history.length < 2;
+    $('cardBtn').disabled = !evo.history.length;
     syncBadge(); drawSpark();
     return true;
   }
@@ -1746,6 +1773,168 @@ const Samples = (() => {
     if (!S.evo && !(S.pendingSave && resumeFrom(S.pendingSave))) { syncResume(); say('저장된 진화를 불러오지 못했어. 새로 시작해줘.', 3000); return; }
     hush(); setMode('evolve');
     say(`다시 이어서 달려! 지금 ${S.evo.gen}세대야.`, 3000);
+  }
+
+  // ---------- champion card ----------
+  // Inside the claude.ai viewer the page cannot download by itself; the `downloads` capability asks the
+  // viewer instead. A standalone copy (offline file, GitHub) has no window.claude and uses a plain link.
+  const inViewer = !!(window.claude && typeof window.claude.use === 'function');
+  const dlReady = inViewer ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+  const CARD_HINT = '저장이 안 되면 이미지를 길게 누르거나(휴대폰) 오른쪽 클릭해서(PC) 저장해.';
+  let cardBlob = null, cardName = '';
+  // the final pose plus up to four earlier ones, each about half a body length behind the next,
+  // looking back at most 4 s, so the trail spreads out whatever the speed
+  function championPoses(genome) {
+    const cr = new Engine.Creature(S.body, genome), total = Math.round(P.GEN_T * 60), frames = [];
+    for (let f = 1; f <= total; f++) {
+      cr.step();
+      if (f > total - 240) frames.push({ body: S.body, x: cr.x.slice(), y: cr.y.slice(), act: cr.act.slice(), cx: cr.comX(), f });
+    }
+    const poses = [frames[frames.length - 1]];
+    for (let i = frames.length - 2; i >= 0 && poses.length < 5; i--) {
+      if (Math.abs(frames[i].cx - poses[0].cx) >= 0.45) poses.unshift(frames[i]);
+    }
+    if (poses.length === 1) poses.unshift(frames[0]); // barely moved: show where it was 4 s earlier
+    poses.span = (poses[poses.length - 1].f - poses[0].f) / 60;
+    return poses;
+  }
+  function drawCard(g) {
+    const h = S.evo.history, rec = h[h.length - 1], first = h[0], Wc = 540, Hc = 675;
+    const genome = rec.genome || h.slice().reverse().find((r) => r.genome).genome;
+    const poses = championPoses(genome), d = new Date();
+    const rr = (x, y, w, hh, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, hh, r); else g.rect(x, y, w, hh); };
+    g.setTransform(2, 0, 0, 2, 0, 0);
+    g.fillStyle = C.paper; g.fillRect(0, 0, Wc, Hc);
+    g.textBaseline = 'alphabetic';
+    g.textAlign = 'left'; g.fillStyle = C.inkSoft; g.font = `700 22px ${HAND}`; g.fillText('낙서 걸음마', 28, 48);
+    g.textAlign = 'right'; g.fillStyle = C.inkFaint; g.font = `13px ${UI_FONT}`;
+    g.fillText(`${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}.`, 512, 46);
+    g.textAlign = 'left'; g.fillStyle = C.ink; g.font = `700 50px ${HAND}`; g.fillText(`${rec.gen}세대 챔피언`, 26, 102);
+    const gt = `걸음: ${GAIT[rec.gait.key]}`;
+    g.font = `600 15px ${UI_FONT}`;
+    const cw = g.measureText(gt).width + 40;
+    rr(28, 118, cw, 30, 15); g.fillStyle = C.paper; g.fill(); g.strokeStyle = C.ink; g.lineWidth = 1.5; g.stroke();
+    g.fillStyle = C.muscle; g.beginPath(); g.arc(44, 133, 4, 0, TAU); g.fill();
+    g.fillStyle = C.ink; g.fillText(gt, 55, 138.5);
+
+    // stage: graph paper, ground, the last 1.2 s as an afterimage trail
+    const X0 = 20, Y0 = 164, SW = 500, SH = 312, GY = 430;
+    const off = S.body.s * 0.5;
+    let mnx = Infinity, mxx = -Infinity, mxy = 0;
+    for (const ps of poses) for (let i = 0; i < ps.x.length; i++) { mnx = Math.min(mnx, ps.x[i]); mxx = Math.max(mxx, ps.x[i]); mxy = Math.max(mxy, ps.y[i]); }
+    mnx -= off; mxx += off; mxy += off;
+    const k = Math.min(440 / (mxx - mnx), 220 / Math.max(0.3, mxy), 330);
+    const v = { ax: X0 + SW / 2 - ((mnx + mxx) / 2) * k, ay: GY, k };
+    g.save(); rr(X0, Y0, SW, SH, 14); g.clip();
+    g.fillStyle = C.paper; g.fillRect(X0, Y0, SW, SH);
+    const step = 0.25 * k;
+    for (let pass = 0; pass < 2; pass++) {
+      g.beginPath();
+      for (let i = Math.floor((X0 - v.ax) / step); v.ax + i * step < X0 + SW; i++) {
+        if ((((i % 4) + 4) % 4 === 0) !== (pass === 1)) continue;
+        const x = v.ax + i * step; g.moveTo(x, Y0); g.lineTo(x, GY);
+      }
+      for (let j = 1; GY - j * step > Y0; j++) {
+        if ((j % 4 === 0) !== (pass === 1)) continue;
+        g.moveTo(X0, GY - j * step); g.lineTo(X0 + SW, GY - j * step);
+      }
+      g.strokeStyle = pass ? C.gridMajor : C.grid; g.lineWidth = 0.8; g.stroke();
+    }
+    g.fillStyle = C.ground; g.fillRect(X0, GY, SW, Y0 + SH - GY);
+    g.beginPath(); g.moveTo(X0, GY); g.lineTo(X0 + SW, GY); g.strokeStyle = C.ink; g.lineWidth = 2; g.stroke();
+    g.fillStyle = C.inkSoft; g.font = `12px ${UI_FONT}`;
+    g.fillText(`8초 동안 ${fmt(rec.best)}m · 마지막 ${poses.span.toFixed(1)}초의 움직임`, X0 + 14, Y0 + 24);
+    g.textAlign = 'right'; g.fillText('모눈 한 칸 = 25cm', X0 + SW - 14, Y0 + SH - 14); g.textAlign = 'left';
+    const col = C.pens[S.body.mainColor] || C.ink, main = ctx;
+    ctx = g;
+    try {
+      poses.forEach((ps, i) => {
+        const a = (i + 1) / poses.length;
+        if (i < poses.length - 1) {
+          silhouette(ps, v, 1); ctx.globalAlpha = 0.05 + 0.12 * a; ctx.fillStyle = col; ctx.fill();
+          ctx.globalAlpha = 0.1 + 0.3 * a; drawStrokes(ps, v); ctx.globalAlpha = 1;
+        } else drawFull(ps, v, { muscle: 0.8 });
+      });
+    } finally { ctx = main; }
+    g.restore();
+    rr(X0, Y0, SW, SH, 14); g.strokeStyle = C.line; g.lineWidth = 1; g.stroke();
+
+    // numbers
+    const big = S.board.filter((e) => e.gen > 1).length;
+    const stats = [
+      ['최고 기록', fmt(rec.best), 'm'],
+      first.best > 0.05 ? ['1세대보다', `×${(rec.best / first.best).toFixed(1)}`, ''] : ['1세대 기록', fmt(first.best), 'm'],
+      ['큰 진화', String(big), '번'],
+    ];
+    stats.forEach(([label, num, unit], i) => {
+      const x = 28 + i * 168;
+      g.fillStyle = C.inkSoft; g.font = `12.5px ${UI_FONT}`; g.fillText(label, x, 506);
+      g.fillStyle = C.ink; g.font = `500 30px ${NUM_FONT}`; g.fillText(num, x, 542);
+      const w = g.measureText(num).width;
+      g.fillStyle = C.inkSoft; g.font = `15px ${UI_FONT}`; g.fillText(unit, x + w + 3, 542);
+    });
+
+    // best record per generation
+    const SX = 28, SY = 592, SW2 = 484, SH2 = 38, n = h.length;
+    g.fillStyle = C.inkSoft; g.font = `12px ${UI_FONT}`; g.fillText('세대별 최고 기록', SX, 581);
+    g.textAlign = 'right'; g.fillText(n > 1 ? `1 → ${rec.gen}세대` : '1세대', SX + SW2, 581); g.textAlign = 'left';
+    let lo = 0, hi = 0.5; for (const r of h) hi = Math.max(hi, r.best);
+    const PX = (i) => (n <= 1 ? SX + SW2 : SX + (i / (n - 1)) * SW2), PY = (val) => SY + SH2 - ((val - lo) / (hi - lo)) * SH2;
+    g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(SX, PY(0)); g.lineTo(SX + SW2, PY(0)); g.stroke();
+    if (n > 1) {
+      g.beginPath(); g.moveTo(PX(0), PY(0)); h.forEach((r, i) => g.lineTo(PX(i), PY(r.best))); g.lineTo(PX(n - 1), PY(0)); g.closePath();
+      g.globalAlpha = 0.14; g.fillStyle = C.accent; g.fill(); g.globalAlpha = 1;
+      g.beginPath(); h.forEach((r, i) => (i ? g.lineTo(PX(i), PY(r.best)) : g.moveTo(PX(i), PY(r.best))));
+      g.strokeStyle = C.accent; g.lineWidth = 2; g.lineJoin = 'round'; g.stroke();
+    }
+    g.fillStyle = C.paper; g.beginPath(); g.arc(PX(n - 1), PY(rec.best), 4.5, 0, TAU); g.fill();
+    g.fillStyle = C.accent; g.beginPath(); g.arc(PX(n - 1), PY(rec.best), 3, 0, TAU); g.fill();
+
+    g.textAlign = 'center'; g.fillStyle = C.inkSoft; g.font = `700 17px ${HAND}`;
+    g.fillText('아무도 가르쳐주지 않았는데 스스로 배운 걸음이야', Wc / 2, 665);
+    return rec;
+  }
+  async function fontsReady() {
+    if (!document.fonts || !document.fonts.load) return;
+    const faces = [`700 50px ${HAND}`, `600 15px ${UI_FONT}`, `13px ${UI_FONT}`, `500 30px ${NUM_FONT}`];
+    await Promise.race([Promise.all(faces.map((f) => document.fonts.load(f).catch(() => null))), new Promise((r) => setTimeout(r, 1500))]);
+  }
+  async function openCard() {
+    if (!S.evo || !S.evo.history.length) return;
+    cardBlob = null;
+    const img = $('cardImg');
+    img.removeAttribute('src'); img.alt = '챔피언 카드를 그리는 중';
+    $('cardSave').disabled = true; $('cardNote').textContent = CARD_HINT;
+    $('card').hidden = false; $('cardClose').focus();
+    await fontsReady();
+    const c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
+    const rec = drawCard(c.getContext('2d'));
+    cardName = `낙서걸음마-${rec.gen}세대-챔피언.png`;
+    img.src = c.toDataURL('image/png');
+    img.alt = `${rec.gen}세대 챔피언 카드. 걸음 ${GAIT[rec.gait.key]}, 최고 기록 ${fmt(rec.best)}m.`;
+    cardBlob = await new Promise((r) => c.toBlob(r, 'image/png'));
+    $('cardSave').disabled = !cardBlob;
+  }
+  async function saveCard() {
+    if (!cardBlob) return;
+    const note = $('cardNote'), dl = await dlReady;
+    if (dl) {
+      try {
+        await dl.save({ filename: cardName, data: cardBlob });
+        note.textContent = '저장했어!';
+      } catch (e) {
+        const code = e && e.code;
+        note.textContent = code === 'declined' ? '저장을 취소했어.'
+          : code === 'rate_limited' ? '저장 창이 이미 떠 있어. 잠깐 뒤에 다시 눌러줘.'
+          : '여기서는 파일로 저장할 수 없어. 이미지를 길게 누르거나 오른쪽 클릭해서 저장해줘.';
+      }
+      return;
+    }
+    if (inViewer) { note.textContent = '여기서는 파일로 저장할 수 없어. 이미지를 길게 누르거나 오른쪽 클릭해서 저장해줘.'; return; }
+    const url = URL.createObjectURL(cardBlob), a = document.createElement('a');
+    a.href = url; a.download = cardName; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    note.textContent = '다운로드를 시작했어. 파일이 안 보이면 이미지를 길게 누르거나 오른쪽 클릭해서 저장해.';
   }
 
   // ---------- record board ----------
@@ -1895,7 +2084,7 @@ const Samples = (() => {
     if (S.mode === 'draw') renderDraw(now);
     else if (S.mode === 'birth') renderBirth(now);
     else if (S.mode === 'evolve') {
-      if ($('board').hidden) updateEvolve(dt, now); // the race waits while the record board is open
+      if ($('board').hidden && $('card').hidden) updateEvolve(dt, now); // the race waits while a sheet is open
       renderEvolve(); updateHUD();
     }
     else if (S.mode === 'compare') { updateCompare(dt, now); renderCompare(); }
@@ -1923,6 +2112,10 @@ const Samples = (() => {
   $('cmpXray').addEventListener('click', toggleXray);
   $('compareBtn').addEventListener('click', () => enterCompare(null));
   $('boardBtn').addEventListener('click', openBoard);
+  $('cardBtn').addEventListener('click', openCard);
+  $('cardSave').addEventListener('click', saveCard);
+  $('cardClose').addEventListener('click', () => closeSheet('card', true));
+  $('card').addEventListener('click', (e) => { if (e.target === $('card')) closeSheet('card', true); });
   $('boardClose').addEventListener('click', () => closeSheet('board', true));
   $('board').addEventListener('click', (e) => { if (e.target === $('board')) closeSheet('board', true); });
   $('pickGen').addEventListener('input', () => setLanes(+$('pickGen').value));
@@ -1940,7 +2133,7 @@ const Samples = (() => {
   };
   function closeSheet(id, refocus) {
     $(id).hidden = true;
-    if (refocus) $(id === 'board' ? 'boardBtn' : 'infoBtn').focus();
+    if (refocus) $(id === 'board' ? 'boardBtn' : id === 'card' ? 'cardBtn' : 'infoBtn').focus();
   }
   const closeInfo = () => closeSheet('info', true);
   $('infoBtn').addEventListener('click', openInfo);
@@ -1950,6 +2143,7 @@ const Samples = (() => {
     if (e.key !== 'Escape') return;
     if (!$('info').hidden) closeInfo();
     else if (!$('board').hidden) closeSheet('board', true);
+    else if (!$('card').hidden) closeSheet('card', true);
     else if (S.mode === 'compare') exitCompare();
   });
 
